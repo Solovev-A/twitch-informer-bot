@@ -12,6 +12,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@twurple/api": "^5.0.18",
+    "@twurple/auth": "^5.0.18",
+    "@twurple/eventsub": "^5.0.18",
+    "@twurple/eventsub-ngrok": "^5.0.18",
     "dotenv": "^16.0.0"
   },
   "devDependencies": {
