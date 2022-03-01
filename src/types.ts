@@ -1,22 +1,46 @@
 export interface App {
-    start(): Promise<void>
-}
-
-export type EventTypeBase = string;
-
-export interface EventObserver<TEvent extends EventTypeBase> {
-    start(): Promise<void>
-    subscribe(event: TEvent): Promise<void>;
-    unsubscribe(eventId: string): Promise<void>;
-}
-
-export interface EventSubscription<TEvent extends EventTypeBase> {
-    eventType: TEvent;
+    readonly observerByType: Map<string, EventObserver<EventTypeBase>>;
     start(): Promise<void>;
 }
 
-export interface EventSubscriptionConfig<TObserver extends EventObserver<TEvent>, TEvent extends EventTypeBase> {
-    eventType: TEvent;
-    observer: TObserver;
+export interface EventTypeBase {
+    eventType: string;
+    subscribeArgs: unknown;
+}
+
+export interface StreamOnlineEventData {
+    broadcasterUser: {
+        id: string;
+        name: string;
+    };
+    type: string
+}
+
+export interface StreamOnlineEvent {
+    eventType: 'stream-online';
+    subscribeArgs: {
+        userId: string;
+        handler: (data: StreamOnlineEventData) => void;
+    };
+}
+
+export interface EventObserver<TEvent extends EventTypeBase> {
+    readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEvent>>;
+    readonly type: string;
+    start(): Promise<void>;
+    subscribe(event: TEvent): Promise<void>;
+    unsubscribe(subscriptionId: string): Promise<void>;
+}
+
+export interface EventSubscription<TEvent extends EventTypeBase> {
+    readonly eventType: TEvent['eventType'];
+    start(): Promise<void>;
+}
+
+export interface EventSubscriptionConfig<TEvent extends EventTypeBase> {
+    observer: EventObserver<TEvent>;
     app: App;
 }
+
+export type EventSubscriptionConstructor<TEvent extends EventTypeBase>
+    = new (config: EventSubscriptionConfig<TEvent>) => EventSubscription<TEvent>;
