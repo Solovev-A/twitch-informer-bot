@@ -17,10 +17,8 @@ export class StreamOnlineSubscription implements EventSubscription<StreamOnlineE
     async start(): Promise<void> {
         this._observer.subscribe({
             eventType: this.eventType,
-            subscribeArgs: {
-                userId: 'userName from repository',
-                handler: async (data) => { /* обработать data */ }
-            }
+            condition: 'userName from repository',
+            handler: (data) => { /* обработать data */ }
         });
     }
 }

@@ -5,7 +5,8 @@ export interface App {
 
 export interface EventTypeBase {
     eventType: string;
-    subscribeArgs: unknown;
+    condition: any;
+    handler: (...args: any[]) => void;
 }
 
 export interface StreamOnlineEventData {
@@ -18,10 +19,8 @@ export interface StreamOnlineEventData {
 
 export interface StreamOnlineEvent {
     eventType: 'stream-online';
-    subscribeArgs: {
-        userId: string;
+    condition: string;
         handler: (data: StreamOnlineEventData) => void;
-    };
 }
 
 export interface EventObserver<TEvent extends EventTypeBase> {

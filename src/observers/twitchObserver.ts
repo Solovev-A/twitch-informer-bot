@@ -17,21 +17,20 @@ export interface ChannelUpdateEventData {
 
 export interface ChannelUpdateEvent {
     eventType: 'channel-update',
-    subscribeArgs: {
-        userId: string,
-        handler: (data: ChannelUpdateEventData) => void
-    }
+    condition: string;
+    handler: (data: ChannelUpdateEventData) => void;
 }
 
 export type TwitchEvent = StreamOnlineEvent | ChannelUpdateEvent;
 
 interface TwitchEventParams {
     eventType: keyof EventsMap,
-    subscribeArgs: any
+    condition: any;
+    handler: (...args: unknown[]) => void;
 }
 
 type EventsMap = {
-    [Event in TwitchEvent as Event['eventType']]: (args: Event['subscribeArgs']) => Promise<EventSubSubscription>;
+    [Event in TwitchEvent as Event['eventType']]: (condition: Event['condition'], handler: Event['handler']) => Promise<EventSubSubscription>;
 };
 
 
@@ -75,17 +74,19 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
         this._listener = new EventSubListener({ apiClient, adapter, secret });
         this._eventSubSubscriptions = [];
         this._functionsByEventType = {
-            'stream-online': async ({ userId, handler }) => {
+            'stream-online': async (userName, handler) => {
+                const userId = await this._getUserId(userName);
                 return await this._listener.subscribeToStreamOnlineEvents(userId, (e) => handler(this._mapStreamOnlineData(e)));
             },
-            'channel-update': async ({ userId, handler }) => {
+            'channel-update': async (userName, handler) => {
+                const userId = await this._getUserId(userName);
                 return await this._listener.subscribeToChannelUpdateEvents(userId, (e) => handler(this._mapChannelUpdateData(e)));
             }
         }
     }
 
-    async subscribe(event: TwitchEventParams) {
-        const eventSubSubscription = await this._functionsByEventType[event.eventType](event.subscribeArgs);
+    async subscribe({ eventType, condition, handler }: TwitchEventParams) {
+        const eventSubSubscription = await this._functionsByEventType[eventType](condition, handler);
         this._eventSubSubscriptions.push(eventSubSubscription);
     }
 
@@ -121,5 +122,11 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
             },
             category: eventSubData.categoryName
         }
+    }
+
+    protected async _getUserId(name: string): Promise<string> {
+        const user = await this._apiClient.users.getUserByName(name);
+        if (user === null) throw new Error(`Пользователь с именем "${name}" не найден`);
+        return user.id;
     }
 }
