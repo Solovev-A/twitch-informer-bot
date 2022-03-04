@@ -1,4 +1,4 @@
-import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor } from './types';
+import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository } from './types';
 import { BaseObserverConfig } from './observers/baseObserver';
 
 
@@ -14,6 +14,8 @@ interface InformerAppConfig {
 
 export class InformerApp implements App {
     readonly observerByType: Map<string, EventObserver<EventTypeBase>>;
+    readonly bots: Bot[];
+    readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
 
     constructor(config: InformerAppConfig) {
         this.observerByType = new Map(
@@ -25,6 +27,9 @@ export class InformerApp implements App {
                 return [observer.type, observer];
             })
         );
+
+        this.bots = []; // TODO получение ботов из конфигурации
+        this.notificationSubscriptionsRepository = {} as NotificationSubscriptionsRepository; // TODO: реализовать репозиторий
     }
 
     async start(): Promise<void> {

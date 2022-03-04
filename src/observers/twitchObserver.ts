@@ -3,7 +3,7 @@ import { ApiClient } from '@twurple/api';
 import { EnvPortAdapter, EventSubListener, EventSubStreamOnlineEvent, EventSubChannelUpdateEvent, EventSubSubscription } from '@twurple/eventsub';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 
-import { StreamOnlineEvent, StreamOnlineEventData } from "../types";
+import { StreamOnlineEvent, StreamOnlineEventData, SubscribeResult } from "../types";
 import { BaseObserver } from './baseObserver';
 
 
@@ -17,7 +17,10 @@ export interface ChannelUpdateEventData {
 
 export interface ChannelUpdateEvent {
     eventType: 'channel-update',
-    condition: string;
+    condition: {
+        broadcasterId?: string;
+        broadcasterUserName: string;
+    };
     handler: (data: ChannelUpdateEventData) => void;
 }
 
@@ -25,7 +28,7 @@ export type TwitchEvent = StreamOnlineEvent | ChannelUpdateEvent;
 
 interface TwitchEventParams {
     eventType: keyof EventsMap,
-    condition: any;
+    condition: TwitchEvent['condition'];
     handler: (...args: unknown[]) => void;
 }
 
@@ -74,20 +77,25 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
         this._listener = new EventSubListener({ apiClient, adapter, secret });
         this._eventSubSubscriptions = [];
         this._functionsByEventType = {
-            'stream-online': async (userName, handler) => {
-                const userId = await this._getUserId(userName);
-                return await this._listener.subscribeToStreamOnlineEvents(userId, (e) => handler(this._mapStreamOnlineData(e)));
+            'stream-online': async ({ broadcasterId }, handler) => {
+                return await this._listener.subscribeToStreamOnlineEvents(broadcasterId!, (e) => handler(this._mapStreamOnlineData(e)));
             },
-            'channel-update': async (userName, handler) => {
-                const userId = await this._getUserId(userName);
-                return await this._listener.subscribeToChannelUpdateEvents(userId, (e) => handler(this._mapChannelUpdateData(e)));
+            'channel-update': async ({ broadcasterId }, handler) => {
+                return await this._listener.subscribeToChannelUpdateEvents(broadcasterId!, (e) => handler(this._mapChannelUpdateData(e)));
             }
         }
     }
 
-    async subscribe({ eventType, condition, handler }: TwitchEventParams) {
-        const eventSubSubscription = await this._functionsByEventType[eventType](condition, handler);
+    async subscribe({ eventType, condition, handler }: TwitchEventParams): Promise<SubscribeResult> {
+        const { broadcasterUserName, broadcasterId } = condition;
+        const userId = !broadcasterId ? await this._getUserId(broadcasterUserName) : broadcasterId;
+        const eventSubSubscription = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
         this._eventSubSubscriptions.push(eventSubSubscription);
+
+        return {
+            subscriptionId: eventSubSubscription._twitchId!,
+            internalCondition: userId
+        }
     }
 
     async unsubscribe(subscriptionId: string): Promise<void> {
