@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 import { InformerApp } from './app';
+import { StartCommand } from './commands/startCommand';
 import { TwitchObserver } from './observers/twitchObserver';
 import { StreamOnlineSubscription } from './subscriptions/streamOnlineSubscription';
 
@@ -14,7 +15,9 @@ const app = new InformerApp({
         type: TwitchObserver,
         subscriptions: [StreamOnlineSubscription]
     }],
-    commands: []
+    commands: [
+        StartCommand,
+    ]
 });
 
 app.start();
