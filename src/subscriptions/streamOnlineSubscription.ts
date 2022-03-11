@@ -1,4 +1,4 @@
-import { EventSubscriptionConfig, App, EventObserver, EventSubscription, StreamOnlineEvent, SubscribeResult } from "../types";
+import { EventSubscriptionConfig, App, EventObserver, EventSubscription, StreamOnlineEvent, SubscribeResult, NotificationSubscription } from "../types";
 
 
 type StreamOnlineSubscriptionCondition = {
@@ -18,15 +18,18 @@ export class StreamOnlineSubscription implements EventSubscription<StreamOnlineE
         this.eventType = 'stream-online';
     }
 
-    async start(condition: StreamOnlineSubscriptionCondition): Promise<void> {
-        const subscribeResult = await this._subscribe(condition);
+    async start(inputCondition: string[]): Promise<NotificationSubscription> {
+        if (inputCondition.length !== 1) throw new Error('<Условие> должно состоять только из юзернейма стримера');
 
-        this._app.notificationSubscriptionsRepository.create({
+        const broadcasterUserName = inputCondition[0];
+        const subscribeResult = await this._subscribe({ broadcasterUserName });
+
+        return await this._app.notificationSubscriptionsRepository.create({
             _id: subscribeResult.subscriptionId,
             internalCondition: subscribeResult.internalCondition,
             eventType: this.eventType,
             observer: this._observer.type,
-            inputCondition: condition.broadcasterUserName,
+            inputCondition: broadcasterUserName,
         });
     }
 

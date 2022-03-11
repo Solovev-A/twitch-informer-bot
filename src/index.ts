@@ -3,6 +3,7 @@ import path from 'path';
 
 import { InformerApp } from './app';
 import { StartCommand } from './commands/startCommand';
+import { AddCommand } from './commands/addCommand';
 import { TwitchObserver } from './observers/twitchObserver';
 import { StreamOnlineSubscription } from './subscriptions/streamOnlineSubscription';
 
@@ -17,6 +18,7 @@ const app = new InformerApp({
     }],
     commands: [
         StartCommand,
+        AddCommand,
     ]
 });
 

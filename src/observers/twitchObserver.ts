@@ -89,12 +89,16 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
     async subscribe({ eventType, condition, handler }: TwitchEventParams): Promise<SubscribeResult> {
         const { broadcasterUserName, broadcasterId } = condition;
         const userId = !broadcasterId ? await this._getUserId(broadcasterUserName) : broadcasterId;
-        const eventSubSubscription = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
-        this._eventSubSubscriptions.push(eventSubSubscription);
-
-        return {
-            subscriptionId: eventSubSubscription._twitchId!,
-            internalCondition: userId
+        try {
+            const eventSubSubscription = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
+            this._eventSubSubscriptions.push(eventSubSubscription);
+            return {
+                subscriptionId: eventSubSubscription._twitchId!,
+                internalCondition: userId
+            }
+        } catch (error) {
+            console.log(error);
+            throw new Error('Во время создания подписки произошла ошибка. Попробуйте повторить попытку позже.');
         }
     }
 
