@@ -62,7 +62,7 @@ export interface Bot {
 
 export interface NotificationSubscriber {
     address: string;
-    subscriptions: NotificationSubscription[];
+    subscriptions: NotificationSubscription[] | any;
     subscriptionsLimit: number;
 }
 
@@ -72,19 +72,25 @@ export interface NotificationSubscription {
     eventType: string;
     inputCondition: string;
     internalCondition: any;
-    subscribersCount: number;
 }
 
 export interface NotificationSubscriptionsRepository {
     listAllSubscriptions(): Promise<NotificationSubscription[]>;
-    create(newSubscription: Omit<NotificationSubscription, 'subscribersCount'>): Promise<NotificationSubscription>;
-    updateInternalCondition(newValue: any): Promise<NotificationSubscription>;
-    remove(id: string): Promise<void>
+    create(newSubscription: NotificationSubscription): Promise<NotificationSubscription>;
+    findWithInternalCondition(subscriptionParams: Pick<NotificationSubscription, 'eventType' | 'internalCondition' | 'observer'>): Promise<NotificationSubscription | null>;
+    findWithInputCondition(subscriptionParams: Pick<NotificationSubscription, 'eventType' | 'inputCondition' | 'observer'>): Promise<NotificationSubscription | null>;
+    updateInputCondition(subscriptionId: string, newValue: string): Promise<NotificationSubscription>;
+    remove(id: string): Promise<void>;
 }
 
 export interface NotificationSubscribersRepository {
-    listSubscribers(subscriptionParams: Pick<NotificationSubscription, 'eventType' | 'internalCondition' | 'observer'>): Promise<NotificationSubscriber[]>;
+    listAddresses(subscriptionId: string): Promise<string[]>;
     listSubscriptions(address: string): Promise<NotificationSubscription[]>;
-    addSubscription(address: string, subscriptionId: string): Promise<NotificationSubscriber>;
-    removeSubscription(address: string, subscriptionId: string): Promise<NotificationSubscriber>;
+    addSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
+    removeSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
+}
+
+export interface RepositoryResponse<T> {
+    errorMessage?: string;
+    result?: T
 }

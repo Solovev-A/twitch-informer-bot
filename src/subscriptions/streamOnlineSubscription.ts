@@ -41,20 +41,35 @@ export class StreamOnlineSubscription implements EventSubscription<StreamOnlineE
                 broadcasterUserName,
                 broadcasterId
             },
-            handler: (data) => {
+            handler: async (data) => {
+                if (data.type !== 'live') return;
+
+                const subscription = await this._app.notificationSubscriptionsRepository.findWithInternalCondition({
+                    eventType: this.eventType,
+                    internalCondition: data.broadcasterUser.id,
+                    observer: this._observer.type
+                });
+
+                if (subscription === null) return;
+
+                if (subscription.inputCondition !== data.broadcasterUser.name) {
+                    this._app.notificationSubscriptionsRepository.updateInputCondition(subscription._id, data.broadcasterUser.name);
+                }
+
+                let subscribersCount = 0;
+
                 this._app.bots.forEach(async (bot) => {
-                    if (data.type !== 'live') return;
-
-                    const subscribers = await bot.subscribersRepository.listSubscribers({
-                        eventType: this.eventType,
-                        internalCondition: data.broadcasterUser.id,
-                        observer: this._observer.type
-                    });
-
-                    subscribers.forEach((subscriber) => {
-                        bot.sendMessage(subscriber.address, `🔴 ${data.broadcasterUser.name} теперь онлайн!`);
+                    const addresses = await bot.subscribersRepository.listAddresses(subscription._id);
+                    addresses.forEach((address) => {
+                        subscribersCount++;
+                        bot.sendMessage(address, `🔴 ${data.broadcasterUser.name} теперь онлайн!`);
                     });
                 });
+
+                if (subscribersCount === 0) {
+                    await this._observer.unsubscribe(subscription._id);
+                    await this._app.notificationSubscriptionsRepository.remove(subscription._id);
+                }
             }
         });
     }
