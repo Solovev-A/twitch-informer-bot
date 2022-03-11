@@ -13,7 +13,8 @@ const app = new InformerApp({
     observers: [{
         type: TwitchObserver,
         subscriptions: [StreamOnlineSubscription]
-    }]
+    }],
+    commands: []
 });
 
 app.start();

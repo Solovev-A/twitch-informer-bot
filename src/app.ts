@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository } from './types';
+import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository, Command } from './types';
 import { BaseObserverConfig } from './observers/baseObserver';
 import { MongodbNotificationSubscriptionsRepository } from './db/mongodbNotificationSubscriptionsRepository';
 
@@ -12,11 +12,13 @@ export interface InformerObserverConfig<TEvent extends EventTypeBase> {
 
 interface InformerAppConfig {
     observers: InformerObserverConfig<any>[];
+    commands: (new (app: App) => Command)[]
 }
 
 export class InformerApp implements App {
     readonly observerByType: Map<string, EventObserver<EventTypeBase>>;
     readonly bots: Bot[];
+    readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
 
     constructor(config: InformerAppConfig) {
@@ -29,6 +31,13 @@ export class InformerApp implements App {
                 return [observer.type, observer];
             })
         );
+
+        this.commandsByName = new Map(
+            config.commands.map(CommandClass => {
+                const command = new CommandClass(this);
+                return [command.name, command];
+            })
+        )
 
         this.bots = []; // TODO получение ботов из конфигурации
         this.notificationSubscriptionsRepository = new MongodbNotificationSubscriptionsRepository();

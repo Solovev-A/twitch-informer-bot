@@ -57,6 +57,7 @@ export type EventSubscriptionConstructor<TEvent extends EventTypeBase>
 
 export interface Bot {
     readonly subscribersRepository: NotificationSubscribersRepository;
+    readonly commandPrefix: string;
     sendMessage(destination: string, message: string): Promise<void>;
 }
 
@@ -93,4 +94,16 @@ export interface NotificationSubscribersRepository {
 export interface RepositoryResponse<T> {
     errorMessage?: string;
     result?: T
+}
+
+export interface Command {
+    readonly name: string;
+    readonly description: string;
+    execute(params: CommandParams): Promise<void>;
+}
+
+export interface CommandParams {
+    bot: Bot;
+    sender: string;
+    rawArgs: string;
 }
