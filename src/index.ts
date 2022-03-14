@@ -7,6 +7,7 @@ import { AddCommand } from './commands/addCommand';
 import { TwitchObserver } from './observers/twitchObserver';
 import { StreamOnlineSubscription } from './subscriptions/streamOnlineSubscription';
 import { DelCommand } from './commands/delCommand';
+import { ListCommand } from './commands/listCommand';
 
 
 dotenv.config({ path: path.resolve(__dirname, '..', `.env.${process.env.NODE_ENV}`) });
@@ -21,6 +22,7 @@ const app = new InformerApp({
         StartCommand,
         AddCommand,
         DelCommand,
+        ListCommand,
     ]
 });
 
