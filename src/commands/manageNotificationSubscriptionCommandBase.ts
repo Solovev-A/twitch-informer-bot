@@ -18,7 +18,7 @@ export abstract class ManageNotificationSubscriptionCommandBase extends CommandB
     protected abstract manageNotificationSubscription(config: ManageSubscriptionConfig): Promise<void>
 
     async execute({ bot, sender, rawArgs }: CommandParams): Promise<void> {
-        const [observer, eventType, ...condition] = rawArgs.trim().split(/\s+/);
+        const [observer, eventType, ...condition] = rawArgs;
 
         const eventObserver = this._app.observerByType.get(observer)!;
         if (eventObserver === undefined) {

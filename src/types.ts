@@ -106,5 +106,5 @@ export interface Command {
 export interface CommandParams {
     bot: Bot;
     sender: string;
-    rawArgs: string;
+    rawArgs: string[];
 }
