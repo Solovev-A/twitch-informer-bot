@@ -1,6 +1,7 @@
 export interface App {
     readonly observerByType: Map<string, EventObserver<EventTypeBase>>;
     readonly bots: Bot[];
+    readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
     start(): Promise<void>;
 }
