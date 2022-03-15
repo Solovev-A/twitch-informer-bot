@@ -7,12 +7,12 @@ export class AddCommand extends ManageNotificationSubscriptionCommandBase {
     readonly description = 'Добавляет подписку на оповщение о событии';
 
     protected async manageNotificationSubscription(config: ManageSubscriptionConfig): Promise<void> {
-        const { bot, sender, condition, eventSubscription } = config;
+        const { bot, sender, inputCondition, eventSubscription } = config;
         let notificationSubscription = config.storedNotificationSubscription;
 
         if (notificationSubscription === null) {
             try {
-                notificationSubscription = await eventSubscription.start(condition);
+                notificationSubscription = await eventSubscription.start(inputCondition);
             } catch (error) {
                 return await bot.sendMessage(sender, Format.error(`${error}`));
             }

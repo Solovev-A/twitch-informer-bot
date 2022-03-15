@@ -44,8 +44,8 @@ export interface EventObserver<TEvent extends EventTypeBase> {
 
 export interface EventSubscription<TEvent extends EventTypeBase> {
     readonly eventType: TEvent['eventType'];
-    start(inputCondition: string[]): Promise<NotificationSubscription>;
-    resume(...args: unknown[]): Promise<void>;
+    start(inputCondition: string): Promise<NotificationSubscription>;
+    resume(inputCondition: string, internalCondition: any): Promise<void>;
 }
 
 export interface EventSubscriptionConfig<TEvent extends EventTypeBase> {

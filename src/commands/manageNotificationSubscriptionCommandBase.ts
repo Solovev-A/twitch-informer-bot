@@ -6,7 +6,7 @@ import { MessageFormatter as Format } from "../utils/messageFormatter";
 export interface ManageSubscriptionConfig {
     bot: Bot;
     sender: string;
-    condition: string[];
+    inputCondition: string;
     storedNotificationSubscription: NotificationSubscription | null;
     eventSubscription: EventSubscription<EventTypeBase>
 }
@@ -19,6 +19,7 @@ export abstract class ManageNotificationSubscriptionCommandBase extends CommandB
 
     async execute({ bot, sender, rawArgs }: CommandParams): Promise<void> {
         const [observer, eventType, ...condition] = rawArgs;
+        const inputCondition = condition.join(' ');
 
         const eventObserver = this._app.observerByType.get(observer)!;
         if (eventObserver === undefined) {
@@ -43,13 +44,13 @@ export abstract class ManageNotificationSubscriptionCommandBase extends CommandB
         const notificationSubscription = await this._app.notificationSubscriptionsRepository.findWithInputCondition({
             eventType,
             observer,
-            inputCondition: condition.join(' ')
+            inputCondition
         });
 
         await this.manageNotificationSubscription({
             bot,
             sender,
-            condition,
+            inputCondition,
             storedNotificationSubscription: notificationSubscription,
             eventSubscription
         });

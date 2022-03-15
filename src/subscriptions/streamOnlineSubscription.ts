@@ -18,10 +18,11 @@ export class StreamOnlineSubscription implements EventSubscription<StreamOnlineE
         this.eventType = 'stream-online';
     }
 
-    async start(inputCondition: string[]): Promise<NotificationSubscription> {
-        if (inputCondition.length !== 1) throw new Error('<Условие> должно состоять только из юзернейма стримера');
+    async start(inputCondition: string): Promise<NotificationSubscription> {
+        const args = inputCondition.split(' ');
+        if (args.length !== 1) throw new Error('<Условие> должно состоять только из юзернейма стримера');
 
-        const broadcasterUserName = inputCondition[0];
+        const broadcasterUserName = inputCondition;
         const subscribeResult = await this._subscribe({ broadcasterUserName });
 
         return await this._app.notificationSubscriptionsRepository.create({
@@ -33,8 +34,8 @@ export class StreamOnlineSubscription implements EventSubscription<StreamOnlineE
         });
     }
 
-    async resume(condition: StreamOnlineSubscriptionCondition) {
-        await this._subscribe(condition);
+    async resume(broadcasterUserName: string, broadcasterId: string) {
+        await this._subscribe({ broadcasterUserName, broadcasterId });
     }
 
     protected async _subscribe({ broadcasterUserName, broadcasterId }: StreamOnlineSubscriptionCondition): Promise<SubscribeResult> {

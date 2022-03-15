@@ -7,11 +7,11 @@ export class DelCommand extends ManageNotificationSubscriptionCommandBase {
     readonly description = 'Удаляет подписку на оповщение о событии';
 
     protected async manageNotificationSubscription(config: ManageSubscriptionConfig): Promise<void> {
-        const { bot, sender, condition } = config;
+        const { bot, sender, inputCondition } = config;
         let notificationSubscription = config.storedNotificationSubscription;
 
         if (notificationSubscription === null) {
-            const message = `У вас нет подписки на оповещения для ${condition.join(' ')}`;
+            const message = `У вас нет подписки на оповещения для ${inputCondition}`;
             return await bot.sendMessage(sender, Format.error(message))
         }
 

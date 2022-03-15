@@ -50,8 +50,25 @@ export class InformerApp implements App {
             await Promise.all(
                 [...this.observerByType.values()].map(async (observer) => await observer.start())
             );
+            await this._resumeStoredNotificationSubscriptions();
         } catch (error) {
             console.log(`Произошла непредвиденная ошибка!`, error);
         }
+    }
+
+    protected async _resumeStoredNotificationSubscriptions(): Promise<void> {
+        const storedSubscriptions = await this.notificationSubscriptionsRepository.listAllSubscriptions();
+
+        await Promise.all(
+            storedSubscriptions.map(sub => {
+                const observer = this.observerByType.get(sub.observer)!;
+                const eventSubscription = observer.eventSubscriptionByEventType.get(sub.eventType)!;
+                try {
+                return eventSubscription.resume(sub.inputCondition, sub.internalCondition);
+                } catch (e) {
+                    console.log('При возобновлении подписки произошла ошибка');
+                }
+            })
+        );
     }
 }
