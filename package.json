@@ -17,8 +17,11 @@
     "@twurple/eventsub": "^5.0.18",
     "@twurple/eventsub-ngrok": "^5.0.18",
     "@typegoose/typegoose": "^9.7.0",
+    "@types/node-telegram-bot-api": "^0.56.0",
     "dotenv": "^16.0.0",
-    "mongoose": "^6.2.5"
+    "mongoose": "^6.2.5",
+    "node-telegram-bot-api": "^0.56.0",
+    "smart-request-balancer": "^2.1.1"
   },
   "devDependencies": {
     "@types/node": "^17.0.18",

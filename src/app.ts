@@ -12,7 +12,8 @@ export interface InformerObserverConfig<TEvent extends EventTypeBase> {
 
 interface InformerAppConfig {
     observers: InformerObserverConfig<any>[];
-    commands: (new (app: App) => Command)[]
+    bots: (new (app: App) => Bot)[];
+    commands: (new (app: App) => Command)[];
 }
 
 export class InformerApp implements App {
@@ -39,7 +40,7 @@ export class InformerApp implements App {
             })
         )
 
-        this.bots = []; // TODO получение ботов из конфигурации
+        this.bots = config.bots.map(BotClass => new BotClass(this));
         this.notificationSubscriptionsRepository = new MongodbNotificationSubscriptionsRepository();
     }
 
