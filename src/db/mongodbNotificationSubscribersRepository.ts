@@ -15,6 +15,10 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         this._model = getModelForClass(schemaClass);
     }
 
+    async clear(): Promise<void> {
+        await this._model.deleteMany({}).exec();
+    }
+
     async listAddresses(subscriptionId: string): Promise<string[]> {
         const subscribers = await this._model
             .find({ subscriptions: subscriptionId })

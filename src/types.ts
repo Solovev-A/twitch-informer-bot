@@ -40,6 +40,7 @@ export interface EventObserver<TEvent extends EventTypeBase> {
     start(): Promise<void>;
     subscribe(event: TEvent): Promise<SubscribeResult>;
     unsubscribe(subscriptionId: string): Promise<void>;
+    reset(): Promise<void>;
 }
 
 export interface EventSubscription<TEvent extends EventTypeBase> {
@@ -83,6 +84,7 @@ export interface NotificationSubscriptionsRepository {
     findWithInputCondition(subscriptionParams: Pick<NotificationSubscription, 'eventType' | 'inputCondition' | 'observer'>): Promise<NotificationSubscription | null>;
     updateInputCondition(subscriptionId: string, newValue: string): Promise<NotificationSubscription>;
     remove(id: string): Promise<void>;
+    clear(): Promise<void>;
 }
 
 export interface NotificationSubscribersRepository {
@@ -90,6 +92,7 @@ export interface NotificationSubscribersRepository {
     listSubscriptions(address: string): Promise<NotificationSubscription[]>;
     addSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
     removeSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
+    clear(): Promise<void>;
 }
 
 export interface RepositoryResponse<T> {

@@ -11,6 +11,10 @@ export class MongodbNotificationSubscriptionsRepository implements NotificationS
         this._model = getModelForClass(SubscriptionSchema);
     }
 
+    async clear(): Promise<void> {
+        await this._model.deleteMany({}).exec();
+    }
+
     async listAllSubscriptions(): Promise<NotificationSubscription[]> {
         return await this._model.find({}).exec();
     }

@@ -111,9 +111,10 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
 
     async start(): Promise<void> {
         await this._listener.listen();
+    }
 
-        // await this._apiClient.eventSub.deleteAllSubscriptions();
-        // TODO: возобновление подписок
+    async reset(): Promise<void> {
+        await this._apiClient.eventSub.deleteAllSubscriptions();
     }
 
     protected _mapStreamOnlineData(eventSubData: EventSubStreamOnlineEvent): StreamOnlineEventData {

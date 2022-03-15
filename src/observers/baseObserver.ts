@@ -27,4 +27,5 @@ export abstract class BaseObserver<TEvent extends EventTypeBase> implements Even
     abstract start(): Promise<void>
     abstract subscribe(event: TEvent): Promise<SubscribeResult>
     abstract unsubscribe(subscriptionId: string): Promise<void>
+    abstract reset(): Promise<void>
 }

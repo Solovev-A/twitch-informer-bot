@@ -47,9 +47,8 @@ export class InformerApp implements App {
     async start(): Promise<void> {
         try {
             await mongoose.connect(process.env.DATABASE_CONNECTION_STRING!);
-            await Promise.all(
-                [...this.observerByType.values()].map(async (observer) => await observer.start())
-            );
+            await this._resetOnDevelopment();
+            await this._startObservers();
             await this._resumeStoredNotificationSubscriptions();
         } catch (error) {
             console.log(`Произошла непредвиденная ошибка!`, error);
@@ -64,11 +63,29 @@ export class InformerApp implements App {
                 const observer = this.observerByType.get(sub.observer)!;
                 const eventSubscription = observer.eventSubscriptionByEventType.get(sub.eventType)!;
                 try {
-                return eventSubscription.resume(sub.inputCondition, sub.internalCondition);
+                    return eventSubscription.resume(sub.inputCondition, sub.internalCondition);
                 } catch (e) {
                     console.log('При возобновлении подписки произошла ошибка');
                 }
             })
         );
+    }
+
+    protected async _startObservers(): Promise<void> {
+        await Promise.all(
+            [...this.observerByType.values()].map(async (observer) => await observer.start())
+        );
+    }
+
+    protected async _resetOnDevelopment(): Promise<void> {
+        if (process.env.NODE_ENV !== 'development') return;
+
+        [...this.observerByType.values()].forEach(async observer => {
+            await observer.reset();
+        });
+        await this.notificationSubscriptionsRepository.clear();
+        this.bots.forEach(async bot => {
+            await bot.subscribersRepository.clear();
+        });
     }
 }
