@@ -21,8 +21,8 @@ export class DelCommand extends ManageNotificationSubscriptionCommandBase {
         }
 
         const message =
-            `Подписка на оповещения ${notificationSubscription.eventType} 
-             для ${notificationSubscription.inputCondition} удалена`;
+            `Подписка на оповещения ${notificationSubscription.eventType} ` +
+            `для ${notificationSubscription.inputCondition} удалена`;
         return await bot.sendMessage(sender, Format.ok(message));
     }
 }

@@ -9,10 +9,11 @@ export class StartCommand extends CommandBase {
     async execute({ bot, sender }: CommandParams): Promise<void> {
         const platforms = [...this._app.observerByType.keys()].join(', ');
         const message =
-            `Привет! Этот бот поможет быть в курсе интересующих вас событий ${platforms}.\n
-             Чтобы начать, введите команду по шаблону:\n
-             ${bot.commandPrefix}add <платформа> <событие> <условие>\n
-             Например: "${bot.commandPrefix}add twitch live sgtgrafoyni"\n`;
+            `Привет! Этот бот поможет быть в курсе интересующих вас событий ${platforms}.\n` +
+            'Чтобы начать, введите команду по шаблону:\n' +
+            `${bot.commandPrefix}add <платформа> <событие> <условие>\n` +
+            'Например:\n' +
+            `${bot.commandPrefix}add twitch live sgtgrafoyni`;
 
         await bot.sendMessage(sender, message);
     }

@@ -41,7 +41,7 @@ function observerNotificationSubscriptionsToString(observer: string, items: Noti
     let result = `${observer}:\n`;
 
     Object.entries(subscriptionsByEventType).forEach(([eventType, subscriptions]) => {
-        result += `\t${eventType} + ':\n'`;
+        result += `\t${eventType}:\n`;
 
         subscriptions.forEach(s => {
             result += `\t- ${s.inputCondition}\n`

@@ -4,7 +4,7 @@ export class MessageFormatter {
     }
 
     static ok(message: string): string {
-        return `✔️ ${message}`
+        return `✅ ${message}`
     }
 
     static recommend(message: string): string {

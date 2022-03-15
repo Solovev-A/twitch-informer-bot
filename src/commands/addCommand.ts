@@ -24,8 +24,8 @@ export class AddCommand extends ManageNotificationSubscriptionCommandBase {
         }
 
         const message =
-            `Подписка на оповещения ${notificationSubscription.eventType} 
-             для ${notificationSubscription.inputCondition} добавлена`;
+            `Подписка на оповещения ${notificationSubscription.eventType} ` +
+            `для ${notificationSubscription.inputCondition} добавлена`;
         return await bot.sendMessage(sender, Format.ok(message));
     }
 }

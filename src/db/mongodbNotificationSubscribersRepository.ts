@@ -48,7 +48,7 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         }
 
         if (subscriber.subscriptions.indexOf(subscriptionId) !== -1) {
-            return { errorMessage: '✔️ Такая подписка уже существует' };
+            return { errorMessage: 'Такая подписка уже существует' };
         }
 
         subscriber.subscriptions.push(subscriptionId);
@@ -62,12 +62,12 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
             .findOne({ address })
             .exec();
 
-        if (!subscriber) {
-            return { errorMessage: '🤔 Ни одной подписки не найдено' };
+        if (!subscriber || subscriber.subscriptions.length === 0) {
+            return { errorMessage: 'Ни одной подписки не найдено' };
         }
 
         if (subscriber.subscriptions.indexOf(subscriptionId) === -1) {
-            return { errorMessage: '🤔 У вас нет такой подписки' };
+            return { errorMessage: 'У вас нет такой подписки' };
         }
 
         subscriber.subscriptions = subscriber.subscriptions.filter(sub => sub !== subscriptionId);
