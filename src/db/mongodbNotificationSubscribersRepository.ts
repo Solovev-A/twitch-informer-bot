@@ -55,6 +55,10 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
             return { errorMessage: 'Такая подписка уже существует' };
         }
 
+        if (subscriber.subscriptions.length >= subscriber.subscriptionsLimit) {
+            return { errorMessage: `Достигнут лимит подписок (${subscriber.subscriptionsLimit})` };
+        }
+
         subscriber.subscriptions.push(subscriptionId);
         await subscriber.save();
 
