@@ -9,7 +9,7 @@ export interface App {
 export interface EventTypeBase {
     eventType: string;
     condition: any;
-    handler: (...args: any[]) => void;
+    handler: (eventData: any) => Promise<void>;
 }
 
 export interface StreamOnlineEventData {
@@ -17,16 +17,15 @@ export interface StreamOnlineEventData {
         id: string;
         name: string;
     };
-    type: string
 }
 
 export interface StreamOnlineEvent {
-    eventType: 'stream-online';
+    eventType: 'live';
     condition: {
         broadcasterId?: string;
         broadcasterUserName: string;
     };
-    handler: (data: StreamOnlineEventData) => void;
+    handler: (data: StreamOnlineEventData) => Promise<void>;
 }
 
 export interface SubscribeResult {
@@ -37,6 +36,7 @@ export interface SubscribeResult {
 export interface EventObserver<TEvent extends EventTypeBase> {
     readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEvent>>;
     readonly type: string;
+    readonly baseUrl: string;
     start(): Promise<void>;
     subscribe(event: TEvent): Promise<SubscribeResult>;
     unsubscribe(subscriptionId: string): Promise<void>;

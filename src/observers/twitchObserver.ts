@@ -21,7 +21,7 @@ export interface ChannelUpdateEvent {
         broadcasterId?: string;
         broadcasterUserName: string;
     };
-    handler: (data: ChannelUpdateEventData) => void;
+    handler: (data: ChannelUpdateEventData) => Promise<void>;
 }
 
 export type TwitchEvent = StreamOnlineEvent | ChannelUpdateEvent;
@@ -29,7 +29,7 @@ export type TwitchEvent = StreamOnlineEvent | ChannelUpdateEvent;
 interface TwitchEventParams {
     eventType: keyof EventsMap,
     condition: TwitchEvent['condition'];
-    handler: (...args: unknown[]) => void;
+    handler: (...args: unknown[]) => Promise<void>;
 }
 
 type EventsMap = {
@@ -44,6 +44,7 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
     protected _eventSubSubscriptions: EventSubSubscription<unknown>[];
 
     readonly type = 'twitch';
+    readonly baseUrl = 'https://www.twitch.tv/';
 
     constructor(config: any) {
         super(config);
@@ -77,8 +78,11 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
         this._listener = new EventSubListener({ apiClient, adapter, secret });
         this._eventSubSubscriptions = [];
         this._functionsByEventType = {
-            'stream-online': async ({ broadcasterId }, handler) => {
-                return await this._listener.subscribeToStreamOnlineEvents(broadcasterId!, (e) => handler(this._mapStreamOnlineData(e)));
+            'live': async ({ broadcasterId }, handler) => {
+                return await this._listener.subscribeToStreamOnlineEvents(broadcasterId!, (e) => {
+                    if (e.streamType !== 'live') return;
+                    handler(this._mapStreamOnlineData(e));
+                });
             },
             'channel-update': async ({ broadcasterId }, handler) => {
                 return await this._listener.subscribeToChannelUpdateEvents(broadcasterId!, (e) => handler(this._mapChannelUpdateData(e)));
@@ -122,8 +126,7 @@ export class TwitchObserver extends BaseObserver<TwitchEvent> {
             broadcasterUser: {
                 id: eventSubData.broadcasterId,
                 name: eventSubData.broadcasterDisplayName
-            },
-            type: eventSubData.streamType
+            }
         }
     }
 

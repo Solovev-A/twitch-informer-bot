@@ -23,6 +23,7 @@ export abstract class BaseObserver<TEvent extends EventTypeBase> implements Even
     }
 
     abstract readonly type: string;
+    abstract readonly baseUrl: string;
 
     abstract start(): Promise<void>
     abstract subscribe(event: TEvent): Promise<SubscribeResult>
