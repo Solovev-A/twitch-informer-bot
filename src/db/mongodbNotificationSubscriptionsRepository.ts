@@ -23,8 +23,8 @@ export class MongodbNotificationSubscriptionsRepository implements NotificationS
         return await this._model.create({ ...newSubscription });
     }
 
-    async findWithInternalCondition(subscriptionParams: Pick<NotificationSubscription, "eventType" | "internalCondition" | "observer">): Promise<NotificationSubscription | null> {
-        return await this._findSubscription(subscriptionParams);
+    async findById(_id: string): Promise<NotificationSubscription | null> {
+        return await this._findSubscription({ _id });
     }
 
     async findWithInputCondition(subscriptionParams: Pick<NotificationSubscription, "eventType" | "observer" | "inputCondition">): Promise<NotificationSubscription | null> {

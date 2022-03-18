@@ -1,23 +1,23 @@
 import mongoose from 'mongoose';
 
-import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository, Command } from './types';
+import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository, Command, EventDataBase } from './types';
 import { BaseObserverConfig } from './observers/baseObserver';
 import { MongodbNotificationSubscriptionsRepository } from './db/mongodbNotificationSubscriptionsRepository';
 
 
-export interface InformerObserverConfig<TEvent extends EventTypeBase> {
-    type: new (config: BaseObserverConfig<TEvent>) => EventObserver<TEvent>;
-    subscriptions: EventSubscriptionConstructor<TEvent>[];
+export interface InformerObserverConfig<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
+    type: new (config: BaseObserverConfig<TEventData, TEvent>) => EventObserver<TEventData, TEvent>;
+    subscriptions: EventSubscriptionConstructor<TEventData, TEvent>[];
 }
 
 interface InformerAppConfig {
-    observers: InformerObserverConfig<any>[];
+    observers: InformerObserverConfig<any, any>[];
     bots: (new (app: App) => Bot)[];
     commands: (new (app: App) => Command)[];
 }
 
 export class InformerApp implements App {
-    readonly observerByType: Map<string, EventObserver<EventTypeBase>>;
+    readonly observerByType: Map<string, EventObserver<EventDataBase, EventTypeBase<EventDataBase>>>;
     readonly bots: Bot[];
     readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;

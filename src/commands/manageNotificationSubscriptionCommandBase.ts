@@ -1,4 +1,4 @@
-import { Bot, CommandParams, EventSubscription, EventTypeBase, NotificationSubscription } from "../types";
+import { Bot, CommandParams, EventDataBase, EventSubscription, EventTypeBase, NotificationSubscription } from "../types";
 import { CommandBase } from "./commandBase";
 import { MessageFormatter as Format } from "../utils/messageFormatter";
 
@@ -8,7 +8,7 @@ export interface ManageSubscriptionConfig {
     sender: string;
     inputCondition: string;
     storedNotificationSubscription: NotificationSubscription | null;
-    eventSubscription: EventSubscription<EventTypeBase>
+    eventSubscription: EventSubscription<EventDataBase, EventTypeBase<EventDataBase>>
 }
 
 export abstract class ManageNotificationSubscriptionCommandBase extends CommandBase {

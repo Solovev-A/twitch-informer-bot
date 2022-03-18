@@ -1,16 +1,18 @@
-import { EventObserver, EventSubscription, EventTypeBase, App, EventSubscriptionConstructor, SubscribeResult } from "../types";
+import { EventObserver, EventSubscription, EventTypeBase, App, EventSubscriptionConstructor, SubscribeResult, EventDataBase } from "../types";
 
 
-export interface BaseObserverConfig<TEvent extends EventTypeBase> {
+export interface BaseObserverConfig<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
     app: App;
-    subscriptions: EventSubscriptionConstructor<TEvent>[];
+    subscriptions: EventSubscriptionConstructor<TEventData, TEvent>[];
 }
 
+export abstract class BaseObserver<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> implements EventObserver<TEventData, TEvent> {
+    protected readonly _app: App;
 
-export abstract class BaseObserver<TEvent extends EventTypeBase> implements EventObserver<TEvent> {
-    readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEvent>>;
+    readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEventData, TEvent>>;
 
-    constructor(config: BaseObserverConfig<TEvent>) {
+    constructor(config: BaseObserverConfig<TEventData, TEvent>) {
+        this._app = config.app;
         this.eventSubscriptionByEventType = new Map(
             config.subscriptions.map(subscriptionType => {
                 const subscription = new subscriptionType({

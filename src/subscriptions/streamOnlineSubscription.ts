@@ -1,11 +1,11 @@
-import { EventSubscriptionConfig, App, EventObserver, EventSubscription, StreamOnlineEvent, SubscribeResult, NotificationSubscription, StreamOnlineEventData } from "../types";
+import { EventSubscriptionConfig, StreamOnlineEvent, StreamOnlineEventData } from "../types";
 import { SubscriptionBase } from "./subscriptionBase";
 
 
-export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent> {
+export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEventData, StreamOnlineEvent> {
     readonly eventType: StreamOnlineEvent['eventType'];
 
-    constructor(config: EventSubscriptionConfig<StreamOnlineEvent>) {
+    constructor(config: EventSubscriptionConfig<StreamOnlineEventData, StreamOnlineEvent>) {
         super(config);
         this.eventType = 'live';
     }
@@ -20,10 +20,6 @@ export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent
             broadcasterUserName: inputCondition,
             broadcasterId: internalCondition
         }
-    }
-
-    protected _getInternalCondition(data: StreamOnlineEventData) {
-        return data.broadcasterUser.id;
     }
 
     protected _getActualInputCondition(data: StreamOnlineEventData): string {

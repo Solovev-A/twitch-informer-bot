@@ -20,4 +20,7 @@ export class SubscriptionSchema implements NotificationSubscription {
 
     @prop({ required: true })
     internalCondition!: any;
+
+    @prop()
+    state?: any;
 }
