@@ -15,6 +15,7 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
     protected abstract _getEventCondition(inputCondition: string, internalCondition?: any): TEvent['condition'];
     protected abstract _getActualInputCondition(eventData: TEventData): string;
     protected abstract _getMessage(eventData: TEventData): string;
+    protected abstract _getNewEventState(eventData: TEventData): any | undefined;
 
     async start(inputCondition: string): Promise<NotificationSubscription> {
         await this._validateInputCondition(inputCondition);
@@ -61,7 +62,13 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
                 if (subscribersCount === 0) {
                     await this._observer.unsubscribe(subscription._id);
                     await this._app.notificationSubscriptionsRepository.remove(subscription._id);
+                    return;
                 }
+
+                const newState = this._getNewEventState(data);
+                if (newState === undefined) return;
+
+                await this._app.notificationSubscriptionsRepository.updateState(subscription._id, newState);
             }
         };
 

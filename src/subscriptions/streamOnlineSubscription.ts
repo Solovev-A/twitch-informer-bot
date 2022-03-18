@@ -30,4 +30,8 @@ export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent
         return `🔴 ${data.broadcasterUser.name} теперь онлайн!\n` +
             `${this._observer.baseUrl}/${data.broadcasterUser.name}`;
     }
+
+    protected _getNewEventState(eventData: StreamOnlineEventData) {
+        return undefined;
+    }
 }

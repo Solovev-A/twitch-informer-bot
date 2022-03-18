@@ -155,7 +155,11 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
             if (notificationSubscription === null) return;
             if (!shouldHandle(eventSubData, notificationSubscription)) return;
 
-            await handler(mapToHandlerData(eventSubData, notificationSubscription));
+            try {
+                await handler(mapToHandlerData(eventSubData, notificationSubscription));
+            } catch (error) {
+                console.log('При обработке данных о событии произошла ошибка', error)
+            }
         })
 
         return eventSubSubscription;

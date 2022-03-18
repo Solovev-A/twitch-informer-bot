@@ -42,6 +42,15 @@ export class MongodbNotificationSubscriptionsRepository implements NotificationS
         return subscription;
     }
 
+    async updateState(subscriptionId: string, newState: any): Promise<void> {
+        const subscription = await this._findSubscription({ _id: subscriptionId });
+
+        if (!subscription) throw new Error('Подписка не найдена');
+
+        subscription.state = newState;
+        await subscription.save();
+    }
+
     async remove(id: string): Promise<void> {
         await this._model
             .deleteOne({ _id: id })

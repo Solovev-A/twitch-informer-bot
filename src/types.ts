@@ -105,6 +105,7 @@ export interface NotificationSubscriptionsRepository {
     findById(id: string): Promise<NotificationSubscription | null>;
     findWithInputCondition(subscriptionParams: Pick<NotificationSubscription, 'eventType' | 'inputCondition' | 'observer'>): Promise<NotificationSubscription | null>;
     updateInputCondition(subscriptionId: string, newValue: string): Promise<NotificationSubscription>;
+    updateState(subscriptionId: string, newState: any): Promise<void>;
     remove(id: string): Promise<void>;
     clear(): Promise<void>;
 }
