@@ -11,9 +11,9 @@ export class StartCommand extends CommandBase {
         const message =
             `Привет! Этот бот поможет быть в курсе интересующих вас событий ${platforms}.\n` +
             'Чтобы начать, введите команду по шаблону:\n' +
-            `${bot.commandPrefix}add <платформа> <событие> <условие>\n` +
+            `${bot.commandPrefix}${this._app.commandRule.template}\n` +
             'Например:\n' +
-            `${bot.commandPrefix}add twitch live sgtgrafoyni`;
+            `${bot.commandPrefix}${this._app.commandRule.example}`;
 
         await bot.sendMessage(sender, message);
     }

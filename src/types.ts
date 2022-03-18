@@ -3,6 +3,7 @@ export interface App {
     readonly bots: Bot[];
     readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
+    readonly commandRule: CommandRule;
     start(): Promise<void>;
 }
 
@@ -131,4 +132,14 @@ export interface CommandParams {
     bot: Bot;
     sender: string;
     rawArgs: string[];
+}
+
+export interface CommandRule {
+    parse(rawArgs: string[]): {
+        observer: string;
+        eventType: string;
+        inputCondition: string;
+    };
+    template: string;
+    example: string;
 }

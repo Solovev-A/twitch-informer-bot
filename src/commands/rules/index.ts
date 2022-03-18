@@ -1,0 +1,1 @@
+export { DefaultCommandRule } from "./defaultCommandRule";

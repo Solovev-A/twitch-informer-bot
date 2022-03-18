@@ -4,6 +4,7 @@ import path from 'path';
 import { InformerApp } from './app';
 import { TelegramBot } from './bots';
 import { AddCommand, DelCommand, HelpCommand, ListCommand, StartCommand } from './commands';
+import { TwitchCategoryInformerRule } from './commands/rules/twitchCategoryInformerRule';
 import { TwitchObserver } from './observers';
 import { StreamOnlineSubscription } from './subscriptions/streamOnlineSubscription';
 
@@ -25,7 +26,8 @@ const app = new InformerApp({
         DelCommand,
         ListCommand,
         HelpCommand,
-    ]
+    ],
+    commandRule: new TwitchCategoryInformerRule()
 });
 
 app.start();
