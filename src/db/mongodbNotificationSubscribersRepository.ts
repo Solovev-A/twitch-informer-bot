@@ -15,6 +15,24 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         this._model = getModelForClass(schemaClass);
     }
 
+    async checkSubscriptionsLimit(address: string): Promise<{ result: boolean, limit: number }> {
+        const subscriber = await this._model
+            .findOne({ address })
+            .exec();
+
+        if (!subscriber) {
+            return {
+                result: true,
+                limit: DEFAULT_SUBSCRIBTIONS_LIMIT
+            }
+        }
+
+        return {
+            result: subscriber.subscriptions.length < subscriber.subscriptionsLimit,
+            limit: subscriber.subscriptionsLimit
+        };
+    }
+
     async clear(): Promise<void> {
         await this._model.deleteMany({}).exec();
     }
@@ -53,10 +71,6 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
 
         if (subscriber.subscriptions.indexOf(subscriptionId) !== -1) {
             return { errorMessage: 'Такая подписка уже существует' };
-        }
-
-        if (subscriber.subscriptions.length >= subscriber.subscriptionsLimit) {
-            return { errorMessage: `Достигнут лимит подписок (${subscriber.subscriptionsLimit})` };
         }
 
         subscriber.subscriptions.push(subscriptionId);

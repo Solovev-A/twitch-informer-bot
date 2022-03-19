@@ -113,6 +113,7 @@ export interface NotificationSubscriptionsRepository {
 export interface NotificationSubscribersRepository {
     listAddresses(subscriptionId: string): Promise<string[]>;
     listSubscriptions(address: string): Promise<NotificationSubscription[]>;
+    checkSubscriptionsLimit(address: string): Promise<{ result: boolean, limit: number }>;
     addSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
     removeSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
     clear(): Promise<void>;

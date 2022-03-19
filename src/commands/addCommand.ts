@@ -10,6 +10,12 @@ export class AddCommand extends ManageNotificationSubscriptionCommandBase {
         const { bot, sender, inputCondition, eventSubscription } = config;
         let notificationSubscription = config.storedNotificationSubscription;
 
+        const limitCheck = await bot.subscribersRepository.checkSubscriptionsLimit(sender);
+        if (!limitCheck.result) {
+            const message = Format.error(`Достигнут лимит подписок (${limitCheck.limit})`);
+            return await bot.sendMessage(sender, message);
+        }
+
         if (notificationSubscription === null) {
             try {
                 notificationSubscription = await eventSubscription.start(inputCondition);
