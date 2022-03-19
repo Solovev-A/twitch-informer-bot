@@ -24,6 +24,7 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
         return await this._app.notificationSubscriptionsRepository.create({
             _id: subscribeResult.subscriptionId,
             internalCondition: subscribeResult.internalCondition,
+            state: subscribeResult.initialState,
             eventType: this.eventType,
             observer: this._observer.type,
             inputCondition

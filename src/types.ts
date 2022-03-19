@@ -52,6 +52,7 @@ export interface BroadcasterRelatedCondition {
 export interface SubscribeResult {
     subscriptionId: string;
     internalCondition: any;
+    initialState?: any;
 }
 
 export interface EventObserver<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {

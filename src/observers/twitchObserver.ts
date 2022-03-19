@@ -17,12 +17,14 @@ interface TwitchEventParams {
 }
 
 type EventsMap = {
-    [Event in TwitchEvent as Event['eventType']]: (condition: Event['condition'], handler: Event['handler']) => Promise<EventSubSubscription>;
+    [Event in TwitchEvent as Event['eventType']]: (condition: Event['condition'], handler: Event['handler'])
+        => Promise<Omit<SubscribeResult, 'internalCondition'>>;
 };
 
 interface SubscribeWithNotificationSubscriptionProcessorConfig<TCondition, TEventData, THandlerData> {
     method: (condition: TCondition, handler: (data: TEventData) => void) => Promise<EventSubSubscription<unknown>>,
     condition: TCondition,
+    getInitialState?: (condition: TCondition) => Promise<any>;
     shouldHandle: (data: TEventData, subscription: NotificationSubscription) => boolean,
     mapToHandlerData: (data: TEventData, subscription: NotificationSubscription) => THandlerData,
     handler: (data: THandlerData) => Promise<void>
@@ -82,9 +84,18 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
             },
             'channel-update': async (condition, handler) => {
                 const broadcasterId = condition.broadcasterId!;
+
+                const getInitialState = async (broadcasterId: string) => {
+                    const info = await this._apiClient.channels.getChannelInfo(broadcasterId);
+                    const lastCategoryName = info?.gameName ?? '';
+
+                    return { lastCategoryName }
+                };
+
                 return await this._processWithNotificationSubscription({
                     method: this._listener.subscribeToChannelUpdateEvents.bind(this._listener),
                     condition: broadcasterId,
+                    getInitialState,
                     shouldHandle: (data, sub) => data.categoryName !== sub.state.lastCategoryName,
                     mapToHandlerData: this._mapChannelUpdateData,
                     handler,
@@ -97,10 +108,10 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         const { broadcasterUserName, broadcasterId } = condition;
         const userId = broadcasterId ?? await this._getUserId(broadcasterUserName);
         try {
-            const eventSubSubscription = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
-            this._eventSubSubscriptions.push(eventSubSubscription);
+            const result = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
+
             return {
-                subscriptionId: eventSubSubscription._twitchId!,
+                ...result,
                 internalCondition: userId
             }
         } catch (error) {
@@ -126,8 +137,8 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
 
     protected async _processWithNotificationSubscription<TCondition, TEventData, THandlerData>(
         config: SubscribeWithNotificationSubscriptionProcessorConfig<TCondition, TEventData, THandlerData>
-    ): Promise<EventSubSubscription> {
-        const { condition, handler, mapToHandlerData, method, shouldHandle } = config;
+    ): Promise<Omit<SubscribeResult, 'internalCondition'>> {
+        const { condition, handler, mapToHandlerData, method, shouldHandle, getInitialState } = config;
 
         // Twurple не передает данные подписки в обработчик, поэтому:
         // 1. Подписываемся на событие без обработчика, чтобы twitch зарегистрировал подписку
@@ -147,6 +158,14 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
             throw new Error('Не удалось подтвердить подписку');
         }
 
+        let initialState = undefined;
+        if (getInitialState !== undefined) {
+            const notificationSubscription = await this._app.notificationSubscriptionsRepository.findById(eventSubSubscription._twitchId!);
+            if (notificationSubscription === null) {
+                initialState = await getInitialState(condition);
+            }
+        }
+
         // 3. При попытке переподписаться на уже существующее верифицированное событие, 
         // twurple не будет отправлять запрос, а лишь заменит обработчик
         eventSubSubscription = await method(condition, async (eventSubData) => {
@@ -160,9 +179,13 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
             } catch (error) {
                 console.log('При обработке данных о событии произошла ошибка', error)
             }
-        })
+        });
 
-        return eventSubSubscription;
+        this._eventSubSubscriptions.push(eventSubSubscription);
+        return {
+            initialState: initialState,
+            subscriptionId: eventSubSubscription._twitchId!,
+        }
     }
 
     protected _mapStreamOnlineData(eventSubData: EventSubStreamOnlineEvent, subscription: NotificationSubscription): StreamOnlineEventData {
