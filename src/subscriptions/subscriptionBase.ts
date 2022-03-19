@@ -50,14 +50,14 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
 
                 let subscribersCount = 0;
 
-                this._app.bots.forEach(async (bot) => {
+                await Promise.all(this._app.bots.map(async (bot) => {
                     const addresses = await bot.subscribersRepository.listAddresses(subscription._id);
+                    subscribersCount += addresses.length;
                     const message = this._getMessage(data);
                     addresses.forEach((address) => {
-                        subscribersCount++;
                         bot.sendMessage(address, message);
                     });
-                });
+                }));
 
                 if (subscribersCount === 0) {
                     await this._observer.unsubscribe(subscription._id);
