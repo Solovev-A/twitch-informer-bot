@@ -3,9 +3,7 @@ import { getModelForClass } from "@typegoose/typegoose";
 import { NotificationSubscriber, NotificationSubscribersRepository, NotificationSubscription, RepositoryResponse } from "../types";
 import { SubscriberSchema } from "./schemas/subscriberSchema";
 import { SubscriptionSchema } from './schemas/subscribtionSchema';
-
-
-const DEFAULT_SUBSCRIBTIONS_LIMIT = 5;
+import { DEFAULT_SUBSCRIBTIONS_LIMIT } from "../utils/constants";
 
 
 export class MongodbNotificationSubscribersRepository<T extends typeof SubscriberSchema> implements NotificationSubscribersRepository {

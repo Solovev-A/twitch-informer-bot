@@ -1,5 +1,6 @@
 import { CommandParams } from "../types";
 import { CommandBase } from "./commandBase";
+import { DEFAULT_SUBSCRIBTIONS_LIMIT } from './../utils/constants';
 
 
 export class StartCommand extends CommandBase {
@@ -13,7 +14,8 @@ export class StartCommand extends CommandBase {
             'Чтобы начать, введите команду по шаблону:\n' +
             `${bot.commandPrefix}${this._app.commandRule.template}\n` +
             'Например:\n' +
-            `${bot.commandPrefix}${this._app.commandRule.example}`;
+            `${bot.commandPrefix}${this._app.commandRule.example}\n\n` +
+            `Лимит подписок на уведомления: ${DEFAULT_SUBSCRIBTIONS_LIMIT}`;
 
         await bot.sendMessage(sender, message);
     }

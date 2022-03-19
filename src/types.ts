@@ -22,6 +22,7 @@ export interface StreamOnlineEventData extends EventDataBase {
         id: string;
         name: string;
     };
+    streamUrl: string;
 }
 
 export interface StreamOnlineEvent {
@@ -35,7 +36,8 @@ export interface ChannelUpdateEventData extends EventDataBase {
         id: string;
         name: string;
     };
-    category: string
+    category: string;
+    streamUrl: string;
 }
 
 export interface ChannelUpdateEvent {
@@ -58,7 +60,6 @@ export interface SubscribeResult {
 export interface EventObserver<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
     readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEventData, TEvent>>;
     readonly type: string;
-    readonly baseUrl: string;
     start(): Promise<void>;
     subscribe(event: TEvent): Promise<SubscribeResult>;
     unsubscribe(subscriptionId: string): Promise<void>;

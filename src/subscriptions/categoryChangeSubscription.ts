@@ -27,8 +27,8 @@ export class CategoryChangeSubscription extends SubscriptionBase<ChannelUpdateEv
     }
 
     protected _getMessage(eventData: ChannelUpdateEventData): string {
-        return `🔄 На стриме у ${eventData.broadcasterUser.name} теперь ${eventData.category}\n` +
-            `${this._observer.baseUrl}/${eventData.broadcasterUser.name}`;
+        return `🔄 ${eventData.broadcasterUser.name} теперь стримит ${eventData.category}\n\n` +
+            `${eventData.streamUrl}`;
     }
 
     protected _getNewEventState(eventData: ChannelUpdateEventData) {

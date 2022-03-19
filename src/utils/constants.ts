@@ -1,0 +1,1 @@
+export const DEFAULT_SUBSCRIBTIONS_LIMIT = 5;

@@ -25,7 +25,6 @@ export abstract class BaseObserver<TEventData extends EventDataBase, TEvent exte
     }
 
     abstract readonly type: string;
-    abstract readonly baseUrl: string;
 
     abstract start(): Promise<void>
     abstract subscribe(event: TEvent): Promise<SubscribeResult>

@@ -27,8 +27,8 @@ export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent
     }
 
     protected _getMessage(data: StreamOnlineEventData): string {
-        return `🔴 ${data.broadcasterUser.name} теперь онлайн!\n` +
-            `${this._observer.baseUrl}/${data.broadcasterUser.name}`;
+        return `🔴 ${data.broadcasterUser.name} - онлайн!\n\n` +
+            `${data.streamUrl}`;
     }
 
     protected _getNewEventState(eventData: StreamOnlineEventData) {

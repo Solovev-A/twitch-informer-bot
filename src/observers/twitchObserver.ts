@@ -35,10 +35,10 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
     protected readonly _apiClient: ApiClient;
     protected readonly _listener: EventSubListener;
     protected readonly _functionsByEventType: EventsMap;
+    protected readonly baseUrl = 'https://www.twitch.tv/';
     protected _eventSubSubscriptions: EventSubSubscription<unknown>[];
 
     readonly type = 'twitch';
-    readonly baseUrl = 'https://www.twitch.tv/';
 
     constructor(config: BaseObserverConfig<any, TwitchEvent>) {
         super(config);
@@ -194,6 +194,7 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
                 id: eventSubData.broadcasterId,
                 name: eventSubData.broadcasterDisplayName
             },
+            streamUrl: this.baseUrl + eventSubData.broadcasterName,
             subscription
         }
     }
@@ -205,6 +206,7 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
                 name: eventSubData.broadcasterDisplayName
             },
             category: eventSubData.categoryName,
+            streamUrl: this.baseUrl + eventSubData.broadcasterName,
             subscription
         }
     }
