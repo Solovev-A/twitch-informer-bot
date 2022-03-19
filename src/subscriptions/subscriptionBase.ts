@@ -44,8 +44,8 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
             handler: async (data: TEventData) => {
                 const { subscription } = data;
 
-                const actualInputCondition = this._getActualInputCondition(data);
-                if (subscription.inputCondition !== actualInputCondition) {
+                const actualInputCondition = this._getActualInputCondition(data).toLowerCase();
+                if (subscription.inputCondition.toLowerCase() !== actualInputCondition) {
                     this._app.notificationSubscriptionsRepository.updateInputCondition(subscription._id, actualInputCondition);
                 }
 
