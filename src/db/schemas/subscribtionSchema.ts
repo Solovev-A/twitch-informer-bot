@@ -1,10 +1,12 @@
-import { index, modelOptions, prop } from "@typegoose/typegoose";
+import { index, modelOptions, prop, Severity } from "@typegoose/typegoose";
 
 import { NotificationSubscription } from "../../types";
 
-@modelOptions({ schemaOptions: { collection: 'notificationSubscriptions' } })
+@modelOptions({
+    schemaOptions: { collection: 'notificationSubscriptions' },
+    options: { allowMixed: Severity.ALLOW }
+})
 @index({ observer: 1, eventType: 1, inputCondition: 1 })
-@index({ observer: 1, eventType: 1, internalCondition: 1 })
 export class SubscriptionSchema implements NotificationSubscription {
     @prop()
     _id!: string;
