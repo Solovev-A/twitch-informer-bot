@@ -4,6 +4,7 @@ import { MessageFormatter as Format } from "../utils/messageFormatter";
 
 export abstract class BotBase implements Bot {
     protected readonly _app: App;
+    protected readonly _clientsInProgress: Set<string>;
 
     abstract readonly commandPrefix: string;
     abstract sendMessage(destination: string, message: string): Promise<void>
@@ -11,6 +12,7 @@ export abstract class BotBase implements Bot {
 
     constructor(app: App) {
         this._app = app;
+        this._clientsInProgress = new Set();
     }
 
     protected async _onMessage(sender: string, message: string): Promise<void> {
@@ -23,14 +25,25 @@ export abstract class BotBase implements Bot {
 
         if (command === undefined) {
             const message =
-                `Нет такой команды. Чтобы ознакомиться со списком доступных комманд, введите ${this.commandPrefix}help`;
+                `Нет такой команды <${commandName}>. Чтобы ознакомиться со списком доступных комманд, введите ${this.commandPrefix}help`;
             return await this.sendMessage(sender, Format.error(message));
         }
 
-        return await command.execute({
-            sender,
-            bot: this,
-            rawArgs: args
-        });
+
+        try {
+            if (this._clientsInProgress.has(sender)) {
+                const message = `Дождитесь обработки предыдущей команды и повторите попытку`;
+                return await this.sendMessage(sender, Format.error(message));
+            }
+
+            this._clientsInProgress.add(sender);
+            await command.execute({
+                sender,
+                bot: this,
+                rawArgs: args
+            });
+        } finally {
+            this._clientsInProgress.delete(sender);
+        }
     }
 }
