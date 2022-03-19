@@ -2,8 +2,8 @@ import { getModelForClass } from "@typegoose/typegoose";
 
 import { NotificationSubscriber, NotificationSubscribersRepository, NotificationSubscription, RepositoryResponse } from "../types";
 import { SubscriberSchema } from "./schemas/subscriberSchema";
-import { SubscriptionSchema } from './schemas/subscribtionSchema';
-import { DEFAULT_SUBSCRIBTIONS_LIMIT } from "../utils/constants";
+import { SubscriptionSchema } from './schemas/subscriptionSchema';
+import { DEFAULT_SUBSCRIPTIONS_LIMIT } from "../utils/constants";
 
 
 export class MongodbNotificationSubscribersRepository<T extends typeof SubscriberSchema> implements NotificationSubscribersRepository {
@@ -21,7 +21,7 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         if (!subscriber) {
             return {
                 result: true,
-                limit: DEFAULT_SUBSCRIBTIONS_LIMIT
+                limit: DEFAULT_SUBSCRIPTIONS_LIMIT
             }
         }
 
@@ -63,7 +63,7 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
             subscriber = new this._model({
                 address,
                 subscriptions: [],
-                subscriptionsLimit: DEFAULT_SUBSCRIBTIONS_LIMIT
+                subscriptionsLimit: DEFAULT_SUBSCRIPTIONS_LIMIT
             });
         }
 

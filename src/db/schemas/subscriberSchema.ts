@@ -1,7 +1,7 @@
 import { prop, Ref } from "@typegoose/typegoose";
 
 import { NotificationSubscriber } from "../../types";
-import { SubscriptionSchema } from "./subscribtionSchema";
+import { SubscriptionSchema } from "./subscriptionSchema";
 
 
 export class SubscriberSchema implements NotificationSubscriber {

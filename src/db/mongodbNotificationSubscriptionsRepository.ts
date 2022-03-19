@@ -1,7 +1,7 @@
 import { getModelForClass } from "@typegoose/typegoose";
 
 import { NotificationSubscription, NotificationSubscriptionsRepository } from "../types";
-import { SubscriptionSchema } from "./schemas/subscribtionSchema";
+import { SubscriptionSchema } from "./schemas/subscriptionSchema";
 
 
 export class MongodbNotificationSubscriptionsRepository implements NotificationSubscriptionsRepository {
