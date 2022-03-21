@@ -17,11 +17,11 @@ export class AddCommand extends ManageNotificationSubscriptionCommandBase {
         }
 
         if (notificationSubscription === null) {
-            try {
-                notificationSubscription = await eventSubscription.start(inputCondition);
-            } catch (error) {
-                return await bot.sendMessage(sender, Format.error(`${error}`));
+            const subscriptionResponse = await eventSubscription.start(inputCondition);
+            if (subscriptionResponse.errorMessage || !subscriptionResponse.result) {
+                return await bot.sendMessage(sender, Format.error(`${subscriptionResponse.errorMessage}`));
             }
+            notificationSubscription = subscriptionResponse.result;
         }
 
         const response = await bot.subscribersRepository.addSubscription(sender, notificationSubscription._id);

@@ -1,4 +1,4 @@
-import { EventObserver, EventSubscription, EventTypeBase, App, EventSubscriptionConstructor, SubscribeResult, EventDataBase } from "../types";
+import { EventObserver, EventSubscription, EventTypeBase, App, EventSubscriptionConstructor, SubscribeResult, EventDataBase, Response } from "../types";
 
 
 export interface BaseObserverConfig<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
@@ -27,7 +27,7 @@ export abstract class BaseObserver<TEventData extends EventDataBase, TEvent exte
     abstract readonly type: string;
 
     abstract start(): Promise<void>
-    abstract subscribe(event: TEvent): Promise<SubscribeResult>
+    abstract subscribe(event: TEvent): Promise<Response<SubscribeResult>>
     abstract unsubscribe(subscriptionId: string): Promise<void>
     abstract reset(): Promise<void>
 }

@@ -1,4 +1,4 @@
-import { App, EventDataBase, EventObserver, EventSubscription, EventSubscriptionConfig, EventTypeBase, NotificationSubscription, SubscribeResult } from "../types";
+import { App, EventDataBase, EventObserver, EventSubscription, EventSubscriptionConfig, EventTypeBase, NotificationSubscription, Response, SubscribeResult } from "../types";
 
 export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> implements EventSubscription<TEventData, TEvent> {
     protected readonly _app: App;
@@ -11,31 +11,48 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
         this._observer = config.observer;
     }
 
-    protected abstract _validateInputCondition(inputCondition: string): Promise<void>;
+    protected abstract _validateInputCondition(inputCondition: string): Response<boolean>;
     protected abstract _getEventCondition(inputCondition: string, internalCondition?: any): TEvent['condition'];
     protected abstract _getActualInputCondition(eventData: TEventData): string;
     protected abstract _getMessage(eventData: TEventData): string;
     protected abstract _getNewEventState(eventData: TEventData): any | undefined;
 
-    async start(inputCondition: string): Promise<NotificationSubscription> {
-        await this._validateInputCondition(inputCondition);
-        const subscribeResult = await this._subscribe(inputCondition);
+    async start(inputCondition: string): Promise<Response<NotificationSubscription>> {
+        const validationResponse = this._validateInputCondition(inputCondition);
+        if (!validationResponse.result) {
+            return { errorMessage: validationResponse.errorMessage }
+        }
 
-        return await this._app.notificationSubscriptionsRepository.create({
-            _id: subscribeResult.subscriptionId,
-            internalCondition: subscribeResult.internalCondition,
-            state: subscribeResult.initialState,
-            eventType: this.eventType,
-            observer: this._observer.type,
-            inputCondition
-        });
+        const subscribeResponse = await this._subscribe(inputCondition);
+        if (subscribeResponse.errorMessage || !subscribeResponse.result) {
+            return { errorMessage: subscribeResponse.errorMessage }
+        }
+
+        const subscribeResult = subscribeResponse.result;
+
+        try {
+            return {
+                result: await this._app.notificationSubscriptionsRepository.create({
+                    _id: subscribeResult.subscriptionId,
+                    internalCondition: subscribeResult.internalCondition,
+                    state: subscribeResult.initialState,
+                    eventType: this.eventType,
+                    observer: this._observer.type,
+                    inputCondition
+                })
+            }
+        } catch (error) {
+            return {
+                errorMessage: 'Кажется, у нас что-то сломалось. Попробуйте повторить попытку позже'
+            }
+        }
     }
 
     async resume(inputCondition: string, internalCondition: any): Promise<void> {
         await this._subscribe(inputCondition, internalCondition);
     }
 
-    protected async _subscribe(inputCondition: string, internalCondition?: any): Promise<SubscribeResult> {
+    protected async _subscribe(inputCondition: string, internalCondition?: any): Promise<Response<SubscribeResult>> {
         const eventCondition = this._getEventCondition(inputCondition, internalCondition);
 
         const event: EventTypeBase<TEventData> = {
@@ -55,8 +72,8 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
                     const addresses = await bot.subscribersRepository.listAddresses(subscription._id);
                     subscribersCount += addresses.length;
                     const message = this._getMessage(data);
-                    addresses.forEach((address) => {
-                        bot.sendMessage(address, message);
+                    addresses.forEach(async (address) => {
+                        await bot.sendMessage(address, message);
                     });
                 }));
 

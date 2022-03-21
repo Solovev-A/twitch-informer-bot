@@ -1,6 +1,6 @@
 import { getModelForClass } from "@typegoose/typegoose";
 
-import { NotificationSubscriber, NotificationSubscribersRepository, NotificationSubscription, RepositoryResponse } from "../types";
+import { NotificationSubscriber, NotificationSubscribersRepository, NotificationSubscription, Response } from "../types";
 import { SubscriberSchema } from "./schemas/subscriberSchema";
 import { SubscriptionSchema } from './schemas/subscriptionSchema';
 import { DEFAULT_SUBSCRIPTIONS_LIMIT } from "../utils/constants";
@@ -54,7 +54,7 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         return subscriber.subscriptions as SubscriptionSchema[];
     }
 
-    async addSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>> {
+    async addSubscription(address: string, subscriptionId: string): Promise<Response<NotificationSubscriber>> {
         let subscriber = await this._model
             .findOne({ address })
             .exec();
@@ -77,7 +77,7 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         return { result: subscriber };
     }
 
-    async removeSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>> {
+    async removeSubscription(address: string, subscriptionId: string): Promise<Response<NotificationSubscriber>> {
         const subscriber = await this._model
             .findOne({ address })
             .exec();
@@ -94,5 +94,9 @@ export class MongodbNotificationSubscribersRepository<T extends typeof Subscribe
         await subscriber.save();
 
         return { result: subscriber };
+    }
+
+    async removeSubscriber(address: string): Promise<void> {
+        await this._model.deleteOne({ address }).exec();
     }
 }

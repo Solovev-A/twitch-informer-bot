@@ -52,7 +52,18 @@ export class TelegramBot extends BotBase {
                     if (error.response?.body?.error_code === 429) {
                         return retry(error.response.body.parameters.retry_after);
                     }
-                    throw error;
+
+                    /*
+                    ? В случае отправки сообщения пользователю, заблокировавшему бота, Telegram отвечает body.error_code 403
+                    ? Однако такой код может быть получен и при иных обстоятельствах
+                    */
+                    if (error.response?.body?.description === 'Forbidden: bot was blocked by the user') {
+                        await this.subscribersRepository.removeSubscriber(destination);
+                        console.log(`[Telegram-bot] Подписка была удалена в связи с отозванным разрешением. Чат ${destination}`)
+                        return;
+                    }
+
+                    console.log('[Telegram-bot] Во время отправки сообщения произошла непредвиденная ошибка', error);
                 }
             },
             destination,

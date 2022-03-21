@@ -64,13 +64,15 @@ export class InformerApp implements App {
         const storedSubscriptions = await this.notificationSubscriptionsRepository.listAllSubscriptions();
 
         await Promise.all(
-            storedSubscriptions.map(sub => {
+            storedSubscriptions.map(async sub => {
                 const observer = this.observerByType.get(sub.observer)!;
                 const eventSubscription = observer.eventSubscriptionByEventType.get(sub.eventType)!;
                 try {
-                    return eventSubscription.resume(sub.inputCondition, sub.internalCondition);
-                } catch (e) {
-                    console.log('При возобновлении подписки произошла ошибка');
+                    return await eventSubscription.resume(sub.inputCondition, sub.internalCondition);
+                } catch (error) {
+                    const message = `При возобновлении подписки произошла ошибка.
+                    Подписка: ${sub}\n`;
+                    console.log(message, error);
                 }
             })
         );

@@ -61,14 +61,14 @@ export interface EventObserver<TEventData extends EventDataBase, TEvent extends 
     readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEventData, TEvent>>;
     readonly type: string;
     start(): Promise<void>;
-    subscribe(event: TEvent): Promise<SubscribeResult>;
+    subscribe(event: TEvent): Promise<Response<SubscribeResult>>;
     unsubscribe(subscriptionId: string): Promise<void>;
     reset(): Promise<void>;
 }
 
 export interface EventSubscription<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
     readonly eventType: TEvent['eventType'];
-    start(inputCondition: string): Promise<NotificationSubscription>;
+    start(inputCondition: string): Promise<Response<NotificationSubscription>>;
     resume(inputCondition: string, internalCondition: any): Promise<void>;
 }
 
@@ -116,12 +116,13 @@ export interface NotificationSubscribersRepository {
     listAddresses(subscriptionId: string): Promise<string[]>;
     listSubscriptions(address: string): Promise<NotificationSubscription[]>;
     checkSubscriptionsLimit(address: string): Promise<{ result: boolean, limit: number }>;
-    addSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
-    removeSubscription(address: string, subscriptionId: string): Promise<RepositoryResponse<NotificationSubscriber>>;
+    addSubscription(address: string, subscriptionId: string): Promise<Response<NotificationSubscriber>>;
+    removeSubscription(address: string, subscriptionId: string): Promise<Response<NotificationSubscriber>>;
+    removeSubscriber(address: string): Promise<void>;
     clear(): Promise<void>;
 }
 
-export interface RepositoryResponse<T> {
+export interface Response<T> {
     errorMessage?: string;
     result?: T
 }

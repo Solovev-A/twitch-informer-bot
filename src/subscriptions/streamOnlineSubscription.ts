@@ -1,4 +1,4 @@
-import { EventSubscriptionConfig, StreamOnlineEvent, StreamOnlineEventData } from "../types";
+import { EventSubscriptionConfig, Response, StreamOnlineEvent, StreamOnlineEventData } from "../types";
 import { SubscriptionBase } from "./subscriptionBase";
 
 
@@ -10,9 +10,11 @@ export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent
         this.eventType = 'live';
     }
 
-    protected async _validateInputCondition(inputCondition: string): Promise<void> {
+    protected _validateInputCondition(inputCondition: string): Response<boolean> {
         const args = inputCondition.split(' ');
-        if (args.length !== 1) throw new Error('<Условие> должно состоять только из юзернейма стримера');
+        if (args.length !== 1) return { errorMessage: '<Условие> должно состоять только из юзернейма стримера' }
+        if (args[0] === '') return { errorMessage: 'Не задано условие - юзернейм стримера' }
+        return { result: true }
     }
 
     protected _getEventCondition(inputCondition: string, internalCondition?: any): StreamOnlineEvent['condition'] {

@@ -42,6 +42,10 @@ export abstract class BotBase implements Bot {
                 bot: this,
                 rawArgs: args
             });
+        } catch (error) {
+            const message = `Во время исполнения команды произошла непредвиденная ошибка!
+            Команда: ${commandName}, аргументы: ${args}\n`
+            console.log(message, error);
         } finally {
             this._clientsInProgress.delete(sender);
         }

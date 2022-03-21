@@ -3,7 +3,7 @@ import { ApiClient } from '@twurple/api';
 import { EnvPortAdapter, EventSubListener, EventSubStreamOnlineEvent, EventSubChannelUpdateEvent, EventSubSubscription } from '@twurple/eventsub';
 import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 
-import { ChannelUpdateEvent, ChannelUpdateEventData, NotificationSubscription, StreamOnlineEvent, StreamOnlineEventData, SubscribeResult } from "../types";
+import { ChannelUpdateEvent, ChannelUpdateEventData, NotificationSubscription, Response, StreamOnlineEvent, StreamOnlineEventData, SubscribeResult } from "../types";
 import { BaseObserver, BaseObserverConfig } from './baseObserver';
 import { delay } from '../utils';
 
@@ -104,26 +104,44 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         }
     }
 
-    async subscribe({ eventType, condition, handler }: TwitchEventParams): Promise<SubscribeResult> {
+    async subscribe({ eventType, condition, handler }: TwitchEventParams): Promise<Response<SubscribeResult>> {
         const { broadcasterUserName, broadcasterId } = condition;
         const userId = broadcasterId ?? await this._getUserId(broadcasterUserName);
+        if (userId === null) {
+            return {
+                errorMessage: `Пользователь с именем "${broadcasterUserName}" не найден`
+            }
+        }
+
         try {
-            const result = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
+            const subscribeResult = await this._functionsByEventType[eventType]({ ...condition, broadcasterId: userId }, handler);
 
             return {
-                ...result,
-                internalCondition: userId
+                result: {
+                    ...subscribeResult,
+                    internalCondition: userId
+                }
             }
         } catch (error) {
-            console.log(error);
-            throw new Error('Во время создания подписки произошла ошибка. Попробуйте повторить попытку позже.');
+            const logMessage = `[Twitch observer] Ошибка во время создания подписки.
+            EventType: ${eventType}, Condition: ${condition}\n`
+            console.log(logMessage, error);
+
+            return {
+                errorMessage: 'Во время создания подписки произошла ошибка. Попробуйте повторить попытку позже.'
+            }
         }
     }
 
     async unsubscribe(subscriptionId: string): Promise<void> {
         const subscription = this._eventSubSubscriptions.find(sub => sub._twitchId === subscriptionId);
         if (subscription === undefined) throw new Error(`Подписка с id "${subscriptionId}" не найдена`)
-        await subscription.stop();
+        try {
+            await subscription.stop();
+        } catch (error) {
+            console.log('[Twitch observer] Ошибка при остановке подписки на событие', error)
+            return;
+        }
         this._eventSubSubscriptions = this._eventSubSubscriptions.filter(sub => sub._twitchId !== subscriptionId);
     }
 
@@ -169,12 +187,12 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         // 3. При попытке переподписаться на уже существующее верифицированное событие, 
         // twurple не будет отправлять запрос, а лишь заменит обработчик
         eventSubSubscription = await method(condition, async (eventSubData) => {
-            const notificationSubscription = await this._app.notificationSubscriptionsRepository.findById(eventSubSubscription._twitchId!);
-
-            if (notificationSubscription === null) return;
-            if (!shouldHandle(eventSubData, notificationSubscription)) return;
-
             try {
+                const notificationSubscription = await this._app.notificationSubscriptionsRepository.findById(eventSubSubscription._twitchId!);
+
+                if (notificationSubscription === null) return;
+                if (!shouldHandle(eventSubData, notificationSubscription)) return;
+
                 await handler(mapToHandlerData(eventSubData, notificationSubscription));
             } catch (error) {
                 console.log('При обработке данных о событии произошла ошибка', error)
@@ -211,9 +229,8 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         }
     }
 
-    protected async _getUserId(name: string): Promise<string> {
+    protected async _getUserId(name: string): Promise<string | null> {
         const user = await this._apiClient.users.getUserByName(name);
-        if (user === null) throw new Error(`Пользователь с именем "${name}" не найден`);
-        return user.id;
+        return user?.id ?? null;
     }
 }
