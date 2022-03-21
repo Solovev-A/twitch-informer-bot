@@ -1,4 +1,4 @@
-import Bot from "node-telegram-bot-api";
+import Telegram from "node-telegram-bot-api";
 import Queue from 'smart-request-balancer';
 
 import { App, NotificationSubscribersRepository } from "../types";
@@ -19,7 +19,7 @@ export class TelegramBot extends BotBase {
     constructor(app: App) {
         super(app);
         this.subscribersRepository = new MongodbNotificationSubscribersRepository(TelegramSubscriber);
-        this._bot = new Bot(process.env.TELEGRAM_BOT_TOKEN!, { polling: true });
+        this._bot = new Telegram(process.env.TELEGRAM_BOT_TOKEN!, { polling: true });
         this._queue = new Queue({
             rules: {
                 individual: {
@@ -35,12 +35,10 @@ export class TelegramBot extends BotBase {
             }
         });
 
-        this._bot.on('message', async ({ text, chat }) => {
-            if (!text) return;
+        const listener = this._processTelegramMessage.bind(this);
 
-            const sender = String(chat.id);
-            await this._onMessage(sender, text);
-        })
+        this._bot.on('message', listener);
+        this._bot.on('channel_post', listener);
     }
 
     async sendMessage(destination: string, message: string): Promise<void> {
@@ -53,11 +51,16 @@ export class TelegramBot extends BotBase {
                         return retry(error.response.body.parameters.retry_after);
                     }
 
-                    /*
-                    ? В случае отправки сообщения пользователю, заблокировавшему бота, Telegram отвечает body.error_code 403
-                    ? Однако такой код может быть получен и при иных обстоятельствах
-                    */
-                    if (error.response?.body?.description === 'Forbidden: bot was blocked by the user') {
+                    const description = error.response?.body?.description;
+
+                    // ? Отлавливать здесь все ошибки 400 и 403 выглядит не менее сомнительно
+
+                    if (description === 'Forbidden: bot was blocked by the user' // заблокирован пользователем
+                        || description === 'Forbidden: bot was kicked from the channel chat' // выгнали из канала
+                        || description === 'Forbidden: bot was kicked from the supergroup chat' // выгнали из группы
+                        || description === 'Bad Request: need administrator rights in the channel chat' // нет прав на отправку сообщений в канал
+                        || description === 'Bad Request: have no rights to send a message' // нет прав на отправку сообщений в группу
+                    ) {
                         await this.subscribersRepository.removeSubscriber(destination);
                         console.log(`[Telegram-bot] Подписка была удалена в связи с отозванным разрешением. Чат ${destination}`)
                         return;
@@ -69,5 +72,12 @@ export class TelegramBot extends BotBase {
             destination,
             'individual'
         );
+    }
+
+    protected async _processTelegramMessage({ text, chat }: Telegram.Message) {
+        if (!text) return;
+
+        const sender = String(chat.id);
+        await this._onMessage(sender, text);
     }
 }
