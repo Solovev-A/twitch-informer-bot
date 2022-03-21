@@ -2,7 +2,7 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 import { InformerApp } from './app';
-import { TelegramBot } from './bots';
+import { DiscordBot, TelegramBot } from './bots';
 import { AddCommand, DelCommand, HelpCommand, ListCommand, StartCommand } from './commands';
 import { TwitchCategoryInformerRule } from './commands/rules/twitchCategoryInformerRule';
 import { TwitchObserver } from './observers';
@@ -19,6 +19,7 @@ const app = new InformerApp({
     }],
     bots: [
         TelegramBot,
+        DiscordBot,
     ],
     commands: [
         StartCommand,
