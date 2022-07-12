@@ -7,9 +7,10 @@ import { AddCommand, DelCommand, HelpCommand, ListCommand, StartCommand } from '
 import { TwitchCategoryInformerRule } from './commands/rules/twitchCategoryInformerRule';
 import { TwitchObserver } from './observers';
 import { CategoryChangeSubscription, StreamOnlineSubscription } from './subscriptions';
+import { Env } from './utils/env';
 
 
-dotenv.config({ path: path.resolve(__dirname, '..', `.env.${process.env.NODE_ENV}`) });
+dotenv.config({ path: path.resolve(__dirname, '..', `.env.${Env.get('NODE_ENV')}`) });
 
 
 InformerApp.create({

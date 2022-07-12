@@ -7,6 +7,7 @@ import { NgrokAdapter } from '@twurple/eventsub-ngrok';
 import { ChannelUpdateEvent, ChannelUpdateEventData, NotificationSubscription, Response, StreamOnlineEvent, StreamOnlineEventData, SubscribeResult } from "../types";
 import { BaseObserver, BaseObserverConfig } from './baseObserver';
 import { delay } from '../utils';
+import { Env } from '../utils/env';
 
 
 export type TwitchEvent = StreamOnlineEvent | ChannelUpdateEvent;
@@ -45,31 +46,24 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
     constructor(config: BaseObserverConfig<any, TwitchEvent>) {
         super(config);
 
-        const { TWITCH_CLIENT_ID,
-            TWITCH_CLIENT_SECRET,
-            TWITCH_SUBSCRIPTION_SECRET,
-            HOST_NAME,
-            NODE_ENV
-        } = process.env;
-
         const authProvider = new ClientCredentialsAuthProvider(
-            String(TWITCH_CLIENT_ID),
-            String(TWITCH_CLIENT_SECRET)
+            Env.get('TWITCH_CLIENT_ID'),
+            Env.get('TWITCH_CLIENT_SECRET')
         );
         const apiClient = new ApiClient({
             authProvider,
             logger: {
-                minLevel: NODE_ENV === 'development' ? 'debug' : 'error'
+                minLevel: Env.isDevelopment ? 'debug' : 'error'
             }
         });
-        const secret = String(TWITCH_SUBSCRIPTION_SECRET);
+        const secret = Env.get('TWITCH_SUBSCRIPTION_SECRET');
 
         this._apiClient = apiClient;
 
-        if (NODE_ENV === 'production') {
+        if (Env.isProduction) {
             this._eventSub = new EventSubMiddleware({
                 apiClient,
-                hostName: HOST_NAME!,
+                hostName: Env.get('HOST_NAME'),
                 pathPrefix: '/twitch',
                 secret
             });
@@ -173,13 +167,13 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
     }
 
     async configure(): Promise<void> {
-        if (process.env.NODE_ENV === 'production') {
+        if (Env.isProduction) {
             await (this._eventSub as EventSubMiddleware).apply(this._app.productionServer);
         }
     }
 
     async start(): Promise<void> {
-        if (process.env.NODE_ENV === 'production') {
+        if (Env.isProduction) {
             await (this._eventSub as EventSubMiddleware).markAsReady();
         } else {
             await (this._eventSub as EventSubListener).listen();
@@ -202,7 +196,7 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
 
         if (isStarting) {
             // 2. Ждем, пока twitch верифицирует подписку, иначе twurple попытается подписаться снова, и это закончится ошибкой
-            let timeout = Number(process.env.TWITCH_VERIFICATION_TIMEOUT) * 1000;
+            let timeout = Number(Env.get('TWITCH_VERIFICATION_TIMEOUT', '60')) * 1000;
             const step = 0.3 * 1000;
 
             while (!eventSubSubscription.verified && timeout > 0) {

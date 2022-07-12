@@ -6,6 +6,7 @@ import { BotBase } from "./botBase";
 import { MongodbNotificationSubscribersRepository } from './../db/mongodbNotificationSubscribersRepository';
 import { SubscriberSchema } from "../db/schemas/subscriberSchema";
 import { parseExpressRequestBody } from "../utils/parseExpressRequestBody";
+import { Env } from '../utils/env';
 
 
 class TelegramSubscriber extends SubscriberSchema { }
@@ -20,10 +21,10 @@ export class TelegramBot extends BotBase {
     constructor(app: App) {
         super(app);
         this.subscribersRepository = new MongodbNotificationSubscribersRepository(TelegramSubscriber);
-        this._bot = new TelegramBotApi(process.env.TELEGRAM_BOT_TOKEN!);
+        this._bot = new TelegramBotApi(Env.get('TELEGRAM_BOT_TOKEN'));
 
-        if (process.env.NODE_ENV === 'production') {
-            app.productionServer.post(`/${process.env.TELEGRAM_BOT_SECRET}`, async (req, res) => {
+        if (Env.isProduction) {
+            app.productionServer.post(`/${Env.get('TELEGRAM_BOT_SECRET')}`, async (req, res) => {
                 try {
                     const body = await parseExpressRequestBody(req);
                     if (body.update_id) {
@@ -57,10 +58,10 @@ export class TelegramBot extends BotBase {
     }
 
     async configure() {
-        if (process.env.NODE_ENV === 'development') {
+        if (Env.isDevelopment) {
             await this._bot.startPolling();
-        } else if (process.env.NODE_ENV === 'production') {
-            await this._bot.setWebHook(`${process.env.HOST_NAME}/${process.env.TELEGRAM_BOT_SECRET}`);
+        } else if (Env.isProduction) {
+            await this._bot.setWebHook(`${Env.get('HOST_NAME')}/${Env.get('TELEGRAM_BOT_SECRET')}`);
         }
     }
 

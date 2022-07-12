@@ -4,6 +4,7 @@ import { App, NotificationSubscribersRepository } from "../types";
 import { BotBase } from "./botBase";
 import { MongodbNotificationSubscribersRepository } from './../db/mongodbNotificationSubscribersRepository';
 import { SubscriberSchema } from "../db/schemas/subscriberSchema";
+import { Env } from '../utils/env';
 
 
 class DiscordSubscriber extends SubscriberSchema { }
@@ -27,7 +28,7 @@ export class DiscordBot extends BotBase {
             await this._onMessage(sender, message.content);
         })
 
-        this._client.login(process.env.DISCORD_BOT_TOKEN!);
+        this._client.login(Env.get('DISCORD_BOT_TOKEN'));
     }
 
     configure(): Promise<void> {

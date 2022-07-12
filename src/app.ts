@@ -5,6 +5,7 @@ import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, N
 import { BaseObserverConfig } from './observers/baseObserver';
 import { MongodbNotificationSubscriptionsRepository } from './db/mongodbNotificationSubscriptionsRepository';
 import { DefaultCommandRule } from './commands/rules';
+import { Env } from './utils/env';
 
 
 export interface InformerObserverConfig<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
@@ -29,14 +30,14 @@ export class InformerApp implements App {
 
     get productionServer(): Express {
         if (this._productionServer === undefined) {
-            throw new Error(`productionServer предназначен для режима "production", сейчас NODE_ENV == "${process.env.NODE_ENV}"`);
+            throw new Error(`productionServer предназначен для режима "production", сейчас NODE_ENV == "${Env.get('NODE_ENV', 'undefined')}"`);
         }
 
         return this._productionServer;
     }
 
     private constructor(config: InformerAppConfig) {
-        if (process.env.NODE_ENV === 'production') {
+        if (Env.isProduction) {
             this._productionServer = express();
         }
         this.observerByType = new Map();
@@ -70,13 +71,13 @@ export class InformerApp implements App {
 
     async start(): Promise<void> {
         try {
-            await mongoose.connect(process.env.DATABASE_CONNECTION_STRING!);
+            await mongoose.connect(Env.get('DATABASE_CONNECTION_STRING'));
 
-            if (process.env.NODE_ENV === 'development') {
+            if (Env.isDevelopment) {
                 await this._reset();
                 await this._startObserversAndBots();
-            } else if (process.env.NODE_ENV === 'production') {
-                this.productionServer.listen(Number(process.env.PORT), async () => {
+            } else if (Env.isProduction) {
+                this.productionServer.listen(Env.port, async () => {
                     await this._startObserversAndBots();
                 });
             }
