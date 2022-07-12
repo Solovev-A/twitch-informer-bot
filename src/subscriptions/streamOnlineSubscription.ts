@@ -36,4 +36,8 @@ export class StreamOnlineSubscription extends SubscriptionBase<StreamOnlineEvent
     protected _getNewEventState(eventData: StreamOnlineEventData) {
         return undefined;
     }
+
+    protected _shouldNotify(eventData: StreamOnlineEventData): boolean {
+        return true;
+    }
 }

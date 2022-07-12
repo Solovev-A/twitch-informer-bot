@@ -38,4 +38,8 @@ export class CategoryChangeSubscription extends SubscriptionBase<ChannelUpdateEv
             lastCategoryName: eventData.category
         }
     }
+
+    protected _shouldNotify(eventData: ChannelUpdateEventData): boolean {
+        return eventData.streamType === 'live';
+    }
 }

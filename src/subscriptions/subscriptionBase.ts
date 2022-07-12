@@ -16,6 +16,7 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
     protected abstract _getActualInputCondition(eventData: TEventData): string;
     protected abstract _getMessage(eventData: TEventData): string;
     protected abstract _getNewEventState(eventData: TEventData): any | undefined;
+    protected abstract _shouldNotify(eventData: TEventData): boolean;
 
     async start(inputCondition: string): Promise<Response<NotificationSubscription>> {
         const validationResponse = this._validateInputCondition(inputCondition);
@@ -68,21 +69,23 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
                     this._app.notificationSubscriptionsRepository.updateInputCondition(subscription._id, actualInputCondition);
                 }
 
-                let subscribersCount = 0;
+                if (this._shouldNotify(data)) {
+                    let subscribersCount = 0;
 
-                await Promise.all(this._app.bots.map(async (bot) => {
-                    const addresses = await bot.subscribersRepository.listAddresses(subscription._id);
-                    subscribersCount += addresses.length;
-                    const message = this._getMessage(data);
-                    addresses.forEach(async (address) => {
-                        await bot.sendMessage(address, message);
-                    });
-                }));
+                    await Promise.all(this._app.bots.map(async (bot) => {
+                        const addresses = await bot.subscribersRepository.listAddresses(subscription._id);
+                        subscribersCount += addresses.length;
+                        const message = this._getMessage(data);
+                        addresses.forEach(async (address) => {
+                            await bot.sendMessage(address, message);
+                        });
+                    }));
 
-                if (subscribersCount === 0) {
-                    await this._observer.unsubscribe(subscription._id);
-                    await this._app.notificationSubscriptionsRepository.remove(subscription._id);
-                    return;
+                    if (subscribersCount === 0) {
+                        await this._observer.unsubscribe(subscription._id);
+                        await this._app.notificationSubscriptionsRepository.remove(subscription._id);
+                        return;
+                    }
                 }
 
                 const newState = this._getNewEventState(data);

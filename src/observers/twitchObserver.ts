@@ -27,7 +27,7 @@ interface SubscribeWithNotificationSubscriptionProcessorConfig<TCondition, TEven
     condition: TCondition,
     getInitialState?: (condition: TCondition) => Promise<any>;
     shouldHandle: (data: TEventData, subscription: NotificationSubscription) => boolean;
-    mapToHandlerData: (data: TEventData, subscription: NotificationSubscription) => THandlerData;
+    mapToHandlerData: (data: TEventData, subscription: NotificationSubscription) => Promise<THandlerData>;
     handler: (data: THandlerData) => Promise<void>;
     isStarting: boolean;
 }
@@ -232,7 +232,8 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
                 if (notificationSubscription === null) return;
                 if (!shouldHandle(eventSubData, notificationSubscription)) return;
 
-                await handler(mapToHandlerData(eventSubData, notificationSubscription));
+                const handlerData = await mapToHandlerData(eventSubData, notificationSubscription);
+                await handler(handlerData);
             } catch (error) {
                 console.log('При обработке данных о событии произошла ошибка', error)
             }
@@ -246,7 +247,7 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         }
     }
 
-    protected _mapStreamOnlineData = (eventSubData: EventSubStreamOnlineEvent, subscription: NotificationSubscription): StreamOnlineEventData => ({
+    protected _mapStreamOnlineData = async (eventSubData: EventSubStreamOnlineEvent, subscription: NotificationSubscription): Promise<StreamOnlineEventData> => ({
         broadcasterUser: {
             id: eventSubData.broadcasterId,
             name: eventSubData.broadcasterDisplayName
@@ -255,15 +256,20 @@ export class TwitchObserver extends BaseObserver<any, TwitchEvent> {
         subscription
     });
 
-    protected _mapChannelUpdateData = (eventSubData: EventSubChannelUpdateEvent, subscription: NotificationSubscription): ChannelUpdateEventData => ({
-        broadcasterUser: {
-            id: eventSubData.broadcasterId,
-            name: eventSubData.broadcasterDisplayName
-        },
-        category: eventSubData.categoryName,
-        streamUrl: this.baseUrl + eventSubData.broadcasterName,
-        subscription
-    });
+    protected _mapChannelUpdateData = async (eventSubData: EventSubChannelUpdateEvent, subscription: NotificationSubscription): Promise<ChannelUpdateEventData> => {
+        const stream = await this._apiClient.streams.getStreamByUserId(eventSubData.broadcasterId);
+
+        return {
+            broadcasterUser: {
+                id: eventSubData.broadcasterId,
+                name: eventSubData.broadcasterDisplayName
+            },
+            category: eventSubData.categoryName,
+            streamUrl: this.baseUrl + eventSubData.broadcasterName,
+            streamType: stream?.type,
+            subscription,
+        }
+    };
 
     protected async _getUserId(name: string): Promise<string | null> {
         const user = await this._apiClient.users.getUserByName(name);

@@ -41,6 +41,7 @@ export interface ChannelUpdateEventData extends EventDataBase {
     };
     category: string;
     streamUrl: string;
+    streamType?: string;
 }
 
 export interface ChannelUpdateEvent {
