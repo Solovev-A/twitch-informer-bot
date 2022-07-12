@@ -1,9 +1,12 @@
+import { Express } from 'express';
+
 export interface App {
     readonly observerByType: Map<string, EventObserver<EventDataBase, EventTypeBase<EventDataBase>>>;
     readonly bots: Bot[];
     readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
     readonly commandRule: CommandRule;
+    readonly productionServer: Express;
     start(): Promise<void>;
 }
 
@@ -60,8 +63,10 @@ export interface SubscribeResult {
 export interface EventObserver<TEventData extends EventDataBase, TEvent extends EventTypeBase<TEventData>> {
     readonly eventSubscriptionByEventType: Map<string, EventSubscription<TEventData, TEvent>>;
     readonly type: string;
+    configure(): Promise<void>;
     start(): Promise<void>;
     subscribe(event: TEvent): Promise<Response<SubscribeResult>>;
+    resumeSubscription(event: TEvent): Promise<void>;
     unsubscribe(subscriptionId: string): Promise<void>;
     reset(): Promise<void>;
 }
@@ -84,6 +89,7 @@ export interface Bot {
     readonly subscribersRepository: NotificationSubscribersRepository;
     readonly commandPrefix: string;
     sendMessage(destination: string, message: string): Promise<void>;
+    configure(): Promise<void>;
 }
 
 export interface NotificationSubscriber {

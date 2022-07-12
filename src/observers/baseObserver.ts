@@ -26,8 +26,28 @@ export abstract class BaseObserver<TEventData extends EventDataBase, TEvent exte
 
     abstract readonly type: string;
 
-    abstract start(): Promise<void>
-    abstract subscribe(event: TEvent): Promise<Response<SubscribeResult>>
-    abstract unsubscribe(subscriptionId: string): Promise<void>
-    abstract reset(): Promise<void>
+    abstract configure(): Promise<void>;
+    abstract start(): Promise<void>;
+    abstract subscribe(event: TEvent): Promise<Response<SubscribeResult>>;
+    abstract resumeSubscription(event: TEvent): Promise<void>;
+    abstract unsubscribe(subscriptionId: string): Promise<void>;
+    abstract reset(): Promise<void>;
+
+    protected async _handleRevocation(subscriptionId: string): Promise<void> {
+        const notificationSubscription = await this._app.notificationSubscriptionsRepository.findById(subscriptionId);
+
+        if (notificationSubscription === null) return;
+
+        const { inputCondition, eventType } = notificationSubscription;
+        this._app.notificationSubscriptionsRepository.remove(subscriptionId);
+
+        this._app.bots.forEach(async bot => {
+            const subscribers = await bot.subscribersRepository.listAddresses(subscriptionId);
+
+            subscribers.forEach(address => {
+                bot.subscribersRepository.removeSubscription(address, subscriptionId);
+                bot.sendMessage(address, `😔 Подписка на оповещения ${eventType} для ${inputCondition} была отменена по запросу от ${this.type}`);
+            })
+        })
+    }
 }

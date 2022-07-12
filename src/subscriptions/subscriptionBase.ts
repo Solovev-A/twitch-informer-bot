@@ -23,7 +23,8 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
             return { errorMessage: validationResponse.errorMessage }
         }
 
-        const subscribeResponse = await this._subscribe(inputCondition);
+        const event = this._createEventObject(inputCondition);
+        const subscribeResponse = await this._observer.subscribe(event);
         if (subscribeResponse.errorMessage || !subscribeResponse.result) {
             return { errorMessage: subscribeResponse.errorMessage }
         }
@@ -49,10 +50,11 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
     }
 
     async resume(inputCondition: string, internalCondition: any): Promise<void> {
-        await this._subscribe(inputCondition, internalCondition);
+        const event = this._createEventObject(inputCondition, internalCondition);
+        await this._observer.resumeSubscription(event);
     }
 
-    protected async _subscribe(inputCondition: string, internalCondition?: any): Promise<Response<SubscribeResult>> {
+    protected _createEventObject(inputCondition: string, internalCondition?: any): EventTypeBase<TEventData> {
         const eventCondition = this._getEventCondition(inputCondition, internalCondition);
 
         const event: EventTypeBase<TEventData> = {
@@ -90,6 +92,6 @@ export abstract class SubscriptionBase<TEventData extends EventDataBase, TEvent 
             }
         };
 
-        return await this._observer.subscribe(event);
+        return event;
     }
 }

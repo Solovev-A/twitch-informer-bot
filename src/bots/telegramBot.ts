@@ -1,10 +1,11 @@
-import Telegram from "node-telegram-bot-api";
+import TelegramBotApi from "node-telegram-bot-api";
 import Queue from 'smart-request-balancer';
 
 import { App, NotificationSubscribersRepository } from "../types";
 import { BotBase } from "./botBase";
 import { MongodbNotificationSubscribersRepository } from './../db/mongodbNotificationSubscribersRepository';
 import { SubscriberSchema } from "../db/schemas/subscriberSchema";
+import { parseExpressRequestBody } from "../utils/parseExpressRequestBody";
 
 
 class TelegramSubscriber extends SubscriberSchema { }
@@ -19,7 +20,21 @@ export class TelegramBot extends BotBase {
     constructor(app: App) {
         super(app);
         this.subscribersRepository = new MongodbNotificationSubscribersRepository(TelegramSubscriber);
-        this._bot = new Telegram(process.env.TELEGRAM_BOT_TOKEN!, { polling: true });
+        this._bot = new TelegramBotApi(process.env.TELEGRAM_BOT_TOKEN!);
+
+        if (process.env.NODE_ENV === 'production') {
+            app.productionServer.post(`/${process.env.TELEGRAM_BOT_SECRET}`, async (req, res) => {
+                try {
+                    const body = await parseExpressRequestBody(req);
+                    if (body.update_id) {
+                        this._bot.processUpdate(body);
+                    }
+                } finally {
+                    res.status(200).json({ message: 'ok' });
+                }
+            });
+        }
+
         this._queue = new Queue({
             rules: {
                 individual: {
@@ -39,6 +54,14 @@ export class TelegramBot extends BotBase {
 
         this._bot.on('message', listener);
         this._bot.on('channel_post', listener);
+    }
+
+    async configure() {
+        if (process.env.NODE_ENV === 'development') {
+            await this._bot.startPolling();
+        } else if (process.env.NODE_ENV === 'production') {
+            await this._bot.setWebHook(`${process.env.HOST_NAME}/${process.env.TELEGRAM_BOT_SECRET}`);
+        }
     }
 
     async sendMessage(destination: string, message: string): Promise<void> {
@@ -74,7 +97,7 @@ export class TelegramBot extends BotBase {
         );
     }
 
-    protected async _processTelegramMessage({ text, chat }: Telegram.Message) {
+    protected async _processTelegramMessage({ text, chat }: TelegramBotApi.Message) {
         if (!text) return;
 
         const sender = String(chat.id);

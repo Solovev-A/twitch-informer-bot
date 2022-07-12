@@ -30,6 +30,10 @@ export class DiscordBot extends BotBase {
         this._client.login(process.env.DISCORD_BOT_TOKEN!);
     }
 
+    configure(): Promise<void> {
+        return Promise.resolve();
+    }
+
     async sendMessage(destination: string, message: string): Promise<void> {
         if (!this._client.isReady()) return;
 

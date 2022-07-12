@@ -48,6 +48,7 @@ export class MongodbNotificationSubscriptionsRepository implements NotificationS
         if (!subscription) throw new Error('Подписка не найдена');
 
         subscription.state = Object.assign(subscription.state ?? {}, newState);
+        subscription.markModified('state');
         await subscription.save();
     }
 

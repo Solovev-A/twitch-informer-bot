@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import express, { Express } from 'express';
 
 import { App, EventTypeBase, EventObserver, EventSubscriptionConstructor, Bot, NotificationSubscriptionsRepository, Command, EventDataBase, CommandRule } from './types';
 import { BaseObserverConfig } from './observers/baseObserver';
@@ -24,43 +25,89 @@ export class InformerApp implements App {
     readonly commandsByName: Map<string, Command>;
     readonly notificationSubscriptionsRepository: NotificationSubscriptionsRepository;
     readonly commandRule: CommandRule;
+    protected _productionServer?: Express;
 
-    constructor(config: InformerAppConfig) {
-        this.observerByType = new Map(
-            config.observers.map(conf => {
-                const observer = new conf.type({
-                    app: this,
-                    subscriptions: conf.subscriptions
-                });
-                return [observer.type, observer];
-            })
-        );
+    get productionServer(): Express {
+        if (this._productionServer === undefined) {
+            throw new Error(`productionServer предназначен для режима "production", сейчас NODE_ENV == "${process.env.NODE_ENV}"`);
+        }
 
+        return this._productionServer;
+    }
+
+    private constructor(config: InformerAppConfig) {
+        if (process.env.NODE_ENV === 'production') {
+            this._productionServer = express();
+        }
+        this.observerByType = new Map();
         this.commandsByName = new Map(
             config.commands.map(CommandClass => {
                 const command = new CommandClass(this);
                 return [command.name, command];
             })
-        )
-
+        );
         this.commandRule = config.commandRule ?? new DefaultCommandRule();
-
         this.bots = config.bots.map(BotClass => new BotClass(this));
         this.notificationSubscriptionsRepository = new MongodbNotificationSubscriptionsRepository();
+    }
+
+    static async create(config: InformerAppConfig): Promise<App> {
+        const app = new InformerApp(config);
+
+        await Promise.all(
+            config.observers.map(async conf => {
+                const observer = new conf.type({
+                    app,
+                    subscriptions: conf.subscriptions
+                });
+                await observer.configure();
+                app.observerByType.set(observer.type, observer);
+            })
+        );
+
+        return app;
     }
 
     async start(): Promise<void> {
         try {
             await mongoose.connect(process.env.DATABASE_CONNECTION_STRING!);
-            await this._resetOnDevelopment();
-            await this._startObservers();
-            await this._resumeStoredNotificationSubscriptions();
+
+            if (process.env.NODE_ENV === 'development') {
+                await this._reset();
+                await this._startObserversAndBots();
+            } else if (process.env.NODE_ENV === 'production') {
+                this.productionServer.listen(Number(process.env.PORT), async () => {
+                    await this._startObserversAndBots();
+                });
+            }
         } catch (error) {
             console.log(`Произошла непредвиденная ошибка!`, error);
         }
     }
 
-    protected async _resumeStoredNotificationSubscriptions(): Promise<void> {
+    protected async _reset(): Promise<void> {
+        [...this.observerByType.values()].forEach(async observer => {
+            await observer.reset();
+        });
+        await this.notificationSubscriptionsRepository.clear();
+        this.bots.forEach(async bot => {
+            await bot.subscribersRepository.clear();
+        });
+    }
+
+    protected async _startObserversAndBots() {
+        await this._startObservers();
+        await this._resumeStoredNotificationSubscriptions();
+        await this._configureBots();
+    }
+
+    private async _startObservers(): Promise<void> {
+        await Promise.all(
+            [...this.observerByType.values()].map(async (observer) => await observer.start())
+        );
+    }
+
+    private async _resumeStoredNotificationSubscriptions(): Promise<void> {
         const storedSubscriptions = await this.notificationSubscriptionsRepository.listAllSubscriptions();
 
         await Promise.all(
@@ -78,21 +125,9 @@ export class InformerApp implements App {
         );
     }
 
-    protected async _startObservers(): Promise<void> {
+    private async _configureBots() {
         await Promise.all(
-            [...this.observerByType.values()].map(async (observer) => await observer.start())
+            this.bots.map(bot => bot.configure())
         );
-    }
-
-    protected async _resetOnDevelopment(): Promise<void> {
-        if (process.env.NODE_ENV !== 'development') return;
-
-        [...this.observerByType.values()].forEach(async observer => {
-            await observer.reset();
-        });
-        await this.notificationSubscriptionsRepository.clear();
-        this.bots.forEach(async bot => {
-            await bot.subscribersRepository.clear();
-        });
     }
 }

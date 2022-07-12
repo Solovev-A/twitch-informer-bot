@@ -15,6 +15,8 @@ export abstract class BotBase implements Bot {
         this._clientsInProgress = new Set();
     }
 
+    abstract configure(): Promise<void>;
+
     protected async _onMessage(sender: string, message: string): Promise<void> {
         if (!message.startsWith(this.commandPrefix)) return;
 

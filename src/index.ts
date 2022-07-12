@@ -12,14 +12,14 @@ import { CategoryChangeSubscription, StreamOnlineSubscription } from './subscrip
 dotenv.config({ path: path.resolve(__dirname, '..', `.env.${process.env.NODE_ENV}`) });
 
 
-const app = new InformerApp({
+InformerApp.create({
     observers: [{
         type: TwitchObserver,
         subscriptions: [StreamOnlineSubscription, CategoryChangeSubscription]
     }],
     bots: [
         TelegramBot,
-        DiscordBot,
+        // DiscordBot,
     ],
     commands: [
         StartCommand,
@@ -29,6 +29,4 @@ const app = new InformerApp({
         HelpCommand,
     ],
     commandRule: new TwitchCategoryInformerRule()
-});
-
-app.start();
+}).then(app => app.start());
